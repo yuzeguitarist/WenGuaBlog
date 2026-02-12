@@ -2529,6 +2529,9 @@ document.addEventListener('click', (e) => {
 // Hide mobile floating controls while scrolling, then fade them back in after scroll stops.
 const mobileControlsMedia = window.matchMedia('(max-width: 1099px)');
 let mobileControlsRevealTimer = null;
+let mobileControlsLastHideAt = 0;
+const MOBILE_CONTROLS_SCROLL_THROTTLE_MS = 120;
+const MOBILE_CONTROLS_REVEAL_DEBOUNCE_MS = 1000;
 
 function setMobileControlsHidden(hidden) {
   if (!mobileControlsMedia.matches) {
@@ -2539,19 +2542,37 @@ function setMobileControlsHidden(hidden) {
 }
 
 function onMobileScrolling() {
-  setMobileControlsHidden(true);
+  const now = Date.now();
+  if (now - mobileControlsLastHideAt >= MOBILE_CONTROLS_SCROLL_THROTTLE_MS) {
+    setMobileControlsHidden(true);
+    mobileControlsLastHideAt = now;
+  }
   if (mobileControlsRevealTimer) clearTimeout(mobileControlsRevealTimer);
   mobileControlsRevealTimer = setTimeout(() => {
     setMobileControlsHidden(false);
-  }, 180);
+  }, MOBILE_CONTROLS_REVEAL_DEBOUNCE_MS);
 }
 
 window.addEventListener('scroll', onMobileScrolling, { passive: true });
 window.addEventListener('touchmove', onMobileScrolling, { passive: true });
 if (mobileControlsMedia.addEventListener) {
-  mobileControlsMedia.addEventListener('change', () => setMobileControlsHidden(false));
+  mobileControlsMedia.addEventListener('change', () => {
+    if (mobileControlsRevealTimer) {
+      clearTimeout(mobileControlsRevealTimer);
+      mobileControlsRevealTimer = null;
+    }
+    mobileControlsLastHideAt = 0;
+    setMobileControlsHidden(false);
+  });
 } else {
-  mobileControlsMedia.addListener(() => setMobileControlsHidden(false));
+  mobileControlsMedia.addListener(() => {
+    if (mobileControlsRevealTimer) {
+      clearTimeout(mobileControlsRevealTimer);
+      mobileControlsRevealTimer = null;
+    }
+    mobileControlsLastHideAt = 0;
+    setMobileControlsHidden(false);
+  });
 }
 
 // ── Sidebar TOC ──
