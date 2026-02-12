@@ -699,7 +699,7 @@ The private thoughts people type into my app aren't training data.
 Their accessibility settings aren't inconveniences.  
 Their attention isn't a resource to extract.
 
-I'm 14 and I've been coding since I was little, but music taught me something code tutorials didn't: the space between notes matters as much as the notes themselves.
+I've been coding since I was little, but music taught me something code tutorials didn't: the space between notes matters as much as the notes themselves.
 
 Wen Gua is that space. A place to breathe before deciding. A ritual that respects the I Ching without gatekeeping it. A reminder that not everything needs to be in the cloud.
 
@@ -1389,7 +1389,7 @@ private struct FinalCard: View { var body: some View { Color.clear } }
 他们的无障碍设置不是麻烦。  
 他们的注意力不是矿产。
 
-我今年 14 岁,从小就在写代码,但音乐教会了我一些代码教程没教的东西:音符之间的停顿和音符本身一样重要。
+我从小就在写代码,但音乐教会了我一些代码教程没教的东西:音符之间的停顿和音符本身一样重要。
 
 Wen Gua 就是那个停顿。决定前呼吸的地方。一个尊重易经但不搞门槛的仪式。一个提醒——不是所有东西都要在云端。
 
