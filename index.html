@@ -2457,10 +2457,17 @@ function setLang(lang) {
 
 // Manual scroll restoration to avoid layout-shift glitch
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+const SCROLL_RESTORE_KEY = '_scrollY';
 
-// Save scroll position before unload
-window.addEventListener('beforeunload', () => {
-  sessionStorage.setItem('_scrollY', String(window.scrollY));
+function saveScrollPosition() {
+  sessionStorage.setItem(SCROLL_RESTORE_KEY, String(Math.max(0, Math.round(window.scrollY))));
+}
+
+// Mobile browsers may skip beforeunload, so we listen to multiple lifecycle events.
+window.addEventListener('beforeunload', saveScrollPosition);
+window.addEventListener('pagehide', saveScrollPosition);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') saveScrollPosition();
 });
 
 // Init language: saved > browser > default
@@ -2469,13 +2476,30 @@ const savedLang = localStorage.getItem('lang');
 setLang(savedLang || detectLang());
 
 // Restore scroll position after content is visible
-requestAnimationFrame(() => {
-  const savedY = sessionStorage.getItem('_scrollY');
-  if (savedY) {
-    window.scrollTo(0, parseInt(savedY, 10));
-    sessionStorage.removeItem('_scrollY');
+function restoreScrollPosition() {
+  const savedY = sessionStorage.getItem(SCROLL_RESTORE_KEY);
+  if (!savedY) return;
+  const targetY = parseInt(savedY, 10);
+  if (!Number.isFinite(targetY)) {
+    sessionStorage.removeItem(SCROLL_RESTORE_KEY);
+    return;
   }
-});
+
+  let tries = 0;
+  function applyRestore() {
+    window.scrollTo(0, targetY);
+    tries += 1;
+    if (Math.abs(window.scrollY - targetY) > 2 && tries < 6) {
+      requestAnimationFrame(applyRestore);
+      return;
+    }
+    sessionStorage.removeItem(SCROLL_RESTORE_KEY);
+  }
+
+  requestAnimationFrame(() => requestAnimationFrame(applyRestore));
+}
+
+restoreScrollPosition();
 
 // Clear any hash on load (prevent jumping to old anchors)
 if (window.location.hash) {
