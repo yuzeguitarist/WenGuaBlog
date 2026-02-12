@@ -38,6 +38,23 @@ body {
   letter-spacing: -0.003em;
 }
 
+/* Remove default tap flash on mobile browsers/WebViews */
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a:focus:not(:focus-visible),
+button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid rgba(29, 29, 31, 0.35);
+  outline-offset: 2px;
+}
+
 /* ── Language Toggle: Desktop (in sidebar) ── */
 .sidebar-lang {
   display: flex;
