@@ -289,12 +289,16 @@ body {
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
     transition: opacity 0.25s ease;
     touch-action: none;
   }
 
 .toc-overlay.open {
   opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .toc-panel {
@@ -2474,7 +2478,6 @@ function openMobileTOC() {
   tocPanel.classList.add('open');
   tocToggle.classList.add('active');
   document.body.style.overflow = 'hidden';
-  document.body.style.touchAction = 'none';
 }
 
 function closeMobileTOC() {
@@ -2482,7 +2485,6 @@ function closeMobileTOC() {
   tocPanel.classList.remove('open');
   tocToggle.classList.remove('active');
   document.body.style.overflow = '';
-  document.body.style.touchAction = '';
 }
 
 tocToggle.addEventListener('click', () => {
