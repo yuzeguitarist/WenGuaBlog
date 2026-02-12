@@ -7,7 +7,8 @@
 <meta name="description" content="Notes on offline semantic search + SwiftUI accessibility. On-device intelligence for Wen Gua.">
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
 <meta name="author" content="Yuze Pan">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f1115">
 <link rel="canonical" href="https://yuzeguitarist.github.io/WenGuaBlog/">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Wen Gua Blog">
@@ -57,14 +58,83 @@
   --code-bg: #f5f5f7;
   --code-border: #e8e8ed;
   --blockquote-border: #1d1d1f;
+  --focus-ring: rgba(29, 29, 31, 0.35);
+  --skip-bg: #1d1d1f;
+  --skip-fg: #fff;
+  --pill-bg: #e8e8ed;
+  --glass-bg: rgba(255,255,255,0.85);
+  --soft-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --overlay-bg: rgba(0,0,0,0.3);
+  --copy-btn-bg: rgba(255,255,255,0.7);
+  --copy-btn-bg-hover: rgba(255,255,255,0.95);
+  --success: #34c759;
+  --lightbox-overlay: rgba(0,0,0,0.6);
+  --lightbox-image-bg: #fff;
+  --lightbox-image-shadow: 0 8px 40px rgba(0,0,0,0.3);
+  --lightbox-btn-border: rgba(255,255,255,0.3);
+  --lightbox-btn-bg: rgba(255,255,255,0.15);
+  --lightbox-btn-bg-hover: rgba(255,255,255,0.3);
+  --lightbox-btn-fg: #fff;
+  --token-keyword: #ad3da4;
+  --token-type: #4b21b0;
+  --token-string: #d12f1b;
+  --token-comment: #707f8c;
+  --token-number: #1c00cf;
+  --token-attr: #643820;
+  --token-func: #326d74;
+  --token-property: #326d74;
+  --token-punctuation: #1d1d1f;
+  --token-operator: #1d1d1f;
+  --token-decorator: #ad3da4;
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-mono: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
   --max-width: 680px;
   --spacing: 1.8rem;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115;
+    --fg: #f3f5f8;
+    --fg-secondary: #a8afbb;
+    --border: #2c3340;
+    --code-bg: #161b24;
+    --code-border: #2a3140;
+    --blockquote-border: #8ea2ff;
+    --focus-ring: rgba(142, 162, 255, 0.65);
+    --skip-bg: #f3f5f8;
+    --skip-fg: #0f1115;
+    --pill-bg: #2a3140;
+    --glass-bg: rgba(20,24,32,0.82);
+    --soft-shadow: 0 6px 24px rgba(0,0,0,0.38);
+    --overlay-bg: rgba(0,0,0,0.56);
+    --copy-btn-bg: rgba(20,24,32,0.82);
+    --copy-btn-bg-hover: rgba(30,36,48,0.96);
+    --success: #3ddc84;
+    --lightbox-overlay: rgba(5,8,12,0.72);
+    --lightbox-image-bg: #101520;
+    --lightbox-image-shadow: 0 10px 42px rgba(0,0,0,0.55);
+    --lightbox-btn-border: rgba(255,255,255,0.24);
+    --lightbox-btn-bg: rgba(17,20,28,0.7);
+    --lightbox-btn-bg-hover: rgba(29,35,48,0.9);
+    --lightbox-btn-fg: #f3f5f8;
+    --token-keyword: #d0a8ff;
+    --token-type: #9bb6ff;
+    --token-string: #ffb176;
+    --token-comment: #8c98a8;
+    --token-number: #a7c6ff;
+    --token-attr: #f4c98b;
+    --token-func: #79d3c7;
+    --token-property: #79d3c7;
+    --token-punctuation: #d7deea;
+    --token-operator: #d7deea;
+    --token-decorator: #d0a8ff;
+  }
+}
+
 html {
   font-size: 17px;
+  color-scheme: light dark;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
@@ -91,7 +161,7 @@ button:focus:not(:focus-visible) {
 
 a:focus-visible,
 button:focus-visible {
-  outline: 2px solid rgba(29, 29, 31, 0.35);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -112,8 +182,8 @@ button:focus-visible {
   top: -3rem;
   left: 1rem;
   z-index: 500;
-  background: #1d1d1f;
-  color: #fff;
+  background: var(--skip-bg);
+  color: var(--skip-fg);
   text-decoration: none;
   padding: 0.45rem 0.8rem;
   border-radius: 8px;
@@ -142,7 +212,7 @@ button:focus-visible {
   left: 3px;
   width: calc(50% - 3px);
   height: calc(100% - 6px);
-  background: #e8e8ed;
+  background: var(--pill-bg);
   border-radius: 999px;
   transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
   z-index: 0;
@@ -186,10 +256,10 @@ button:focus-visible {
   width: 44px;
   border-radius: 22px;
   border: 1px solid var(--border);
-  background: rgba(255,255,255,0.85);
+  background: var(--glass-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  box-shadow: var(--soft-shadow);
   overflow: hidden;
   transition: height 0.3s cubic-bezier(0.32, 0.72, 0, 1), border-radius 0.3s ease, opacity 0.35s ease, transform 0.35s ease;
   flex-direction: column;
@@ -260,7 +330,7 @@ button:focus-visible {
 }
 
 .lang-fab-menu button.active {
-  background: #e8e8ed;
+  background: var(--pill-bg);
   color: var(--fg);
 }
 
@@ -330,7 +400,7 @@ button:focus-visible {
   height: 44px;
   border-radius: 50%;
   border: 1px solid var(--border);
-  background: rgba(255,255,255,0.85);
+  background: var(--glass-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   cursor: pointer;
@@ -338,7 +408,7 @@ button:focus-visible {
   justify-content: center;
   color: var(--fg-secondary);
   transition: color 0.2s, box-shadow 0.2s, opacity 0.35s ease, transform 0.35s ease;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  box-shadow: var(--soft-shadow);
 }
 
 .toc-toggle:hover { color: var(--fg); }
@@ -372,7 +442,7 @@ button:focus-visible {
     position: fixed;
     inset: 0;
     z-index: 190;
-    background: rgba(0,0,0,0.3);
+    background: var(--overlay-bg);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     opacity: 0;
@@ -721,7 +791,7 @@ hr {
       height: 32px;
       border: 1px solid var(--code-border);
       border-radius: 6px;
-      background: rgba(255,255,255,0.7);
+      background: var(--copy-btn-bg);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       cursor: pointer;
@@ -745,7 +815,7 @@ hr {
   }
 
 .copy-btn:hover {
-    background: rgba(255,255,255,0.95);
+    background: var(--copy-btn-bg-hover);
     color: var(--fg);
   }
 
@@ -759,7 +829,7 @@ hr {
     position: absolute;
     opacity: 0;
     transform: scale(0.5);
-    color: #34c759;
+    color: var(--success);
   }
 
 .copy-btn.copied .icon-copy {
@@ -773,17 +843,17 @@ hr {
   }
 
 /* ── Syntax Highlighting (Swift) ── */
-.token-keyword { color: #ad3da4; }
-.token-type { color: #4b21b0; }
-.token-string { color: #d12f1b; }
-.token-comment { color: #707f8c; font-style: italic; }
-.token-number { color: #1c00cf; }
-.token-attr { color: #643820; }
-.token-func { color: #326d74; }
-.token-property { color: #326d74; }
-.token-punctuation { color: #1d1d1f; }
-.token-operator { color: #1d1d1f; }
-.token-decorator { color: #ad3da4; }
+.token-keyword { color: var(--token-keyword); }
+.token-type { color: var(--token-type); }
+.token-string { color: var(--token-string); }
+.token-comment { color: var(--token-comment); font-style: italic; }
+.token-number { color: var(--token-number); }
+.token-attr { color: var(--token-attr); }
+.token-func { color: var(--token-func); }
+.token-property { color: var(--token-property); }
+.token-punctuation { color: var(--token-punctuation); }
+.token-operator { color: var(--token-operator); }
+.token-decorator { color: var(--token-decorator); }
 
 /* ── Section Transitions ── */
 .section {
@@ -862,7 +932,7 @@ hr {
   position: fixed;
   inset: 0;
   z-index: 300;
-  background: rgba(0,0,0,0.6);
+  background: var(--lightbox-overlay);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   align-items: center;
@@ -880,8 +950,8 @@ hr {
   max-width: 90vw;
   max-height: 75vh;
   border-radius: 12px;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.3);
-  background: #fff;
+  box-shadow: var(--lightbox-image-shadow);
+  background: var(--lightbox-image-bg);
   padding: 1rem;
 }
 
@@ -898,11 +968,11 @@ hr {
   gap: 6px;
   padding: 8px 18px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.3);
-  background: rgba(255,255,255,0.15);
+  border: 1px solid var(--lightbox-btn-border);
+  background: var(--lightbox-btn-bg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  color: #fff;
+  color: var(--lightbox-btn-fg);
   font-family: var(--font-sans);
   font-size: 0.82rem;
   font-weight: 500;
@@ -912,9 +982,9 @@ hr {
 }
 
 .lightbox-btn:hover {
-  background: rgba(255,255,255,0.3);
+  background: var(--lightbox-btn-bg-hover);
   text-decoration: none;
-  color: #fff;
+  color: var(--lightbox-btn-fg);
 }
 
 .lightbox-btn svg {
