@@ -1,0 +1,2788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Why I didn't want my diary in the cloud</title>
+<meta name="description" content="Notes on offline semantic search + SwiftUI accessibility. On-device intelligence for Wen Gua.">
+<style>
+/* ── Reset & Base ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #fff;
+  --fg: #1d1d1f;
+  --fg-secondary: #6e6e73;
+  --border: #d2d2d7;
+  --code-bg: #f5f5f7;
+  --code-border: #e8e8ed;
+  --blockquote-border: #1d1d1f;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+  --max-width: 680px;
+  --spacing: 1.8rem;
+}
+
+html {
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--fg);
+  background: var(--bg);
+  line-height: 1.7;
+  letter-spacing: -0.003em;
+}
+
+/* ── Language Toggle: Desktop (in sidebar) ── */
+.sidebar-lang {
+  display: flex;
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  margin-bottom: 1.8rem;
+  width: fit-content;
+  padding: 3px;
+}
+
+.sidebar-lang-pill {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  height: calc(100% - 6px);
+  background: #e8e8ed;
+  border-radius: 999px;
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  z-index: 0;
+}
+
+.sidebar-lang.lang-zh .sidebar-lang-pill {
+  transform: translateX(100%);
+}
+
+.sidebar-lang button {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 14px;
+    border: none;
+    background: transparent;
+    color: var(--fg-secondary);
+    cursor: pointer;
+    transition: color 0.25s ease;
+    letter-spacing: 0.01em;
+    border-radius: 999px;
+  }
+
+  .sidebar-lang button.active {
+    color: var(--fg);
+  }
+
+  .sidebar-lang button:not(.active):hover {
+    color: var(--fg);
+  }
+
+/* ── Language Toggle: Mobile (floating globe FAB) ── */
+.lang-fab {
+  display: none;
+  position: fixed;
+  top: 1.2rem;
+  right: 1.2rem;
+  z-index: 200;
+  width: 44px;
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  overflow: hidden;
+  transition: height 0.3s cubic-bezier(0.32, 0.72, 0, 1), border-radius 0.3s ease;
+  flex-direction: column;
+  align-items: center;
+  height: 44px;
+}
+
+.lang-fab-trigger {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-secondary);
+  transition: color 0.2s;
+}
+
+.lang-fab-trigger:hover { color: var(--fg); }
+
+.lang-fab-trigger svg {
+  width: 20px;
+  height: 20px;
+  transition: transform 0.3s ease;
+}
+
+.lang-fab.open {
+  height: 120px;
+  border-radius: 22px;
+}
+
+.lang-fab.open .lang-fab-trigger svg {
+  transform: rotate(180deg);
+}
+
+.lang-fab-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 5px 5px;
+  opacity: 0;
+  transition: opacity 0.2s ease 0.05s;
+}
+
+.lang-fab.open .lang-fab-menu {
+  opacity: 1;
+}
+
+.lang-fab-menu button {
+  width: 34px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+}
+
+.lang-fab-menu button.active {
+  background: #e8e8ed;
+  color: var(--fg);
+}
+
+.lang-fab-menu button:not(.active):hover {
+  color: var(--fg);
+}
+
+@media (max-width: 1099px) {
+  .lang-fab {
+    display: flex;
+  }
+}
+
+/* ── Sidebar Navigation ── */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 260px;
+  height: 100vh;
+  padding: 3rem 1.5rem 3rem 2rem;
+  overflow-y: auto;
+  display: none;
+  z-index: 50;
+}
+
+.sidebar::-webkit-scrollbar { width: 0; }
+
+.sidebar-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: opacity 0.3s ease;
+  }
+
+.sidebar a {
+  display: block;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--fg-secondary);
+  text-decoration: none;
+  padding: 5px 12px;
+  border-left: 1.5px solid transparent;
+  border-radius: 0;
+  transition: color 0.2s, border-color 0.2s;
+  letter-spacing: -0.005em;
+}
+
+.sidebar a:hover {
+  color: var(--fg);
+}
+
+.sidebar a.active {
+  color: var(--fg);
+  font-weight: 500;
+  border-left-color: var(--fg);
+}
+
+/* ── Mobile TOC Toggle ── */
+.toc-toggle {
+  display: none;
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 200;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-secondary);
+  transition: color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.toc-toggle:hover { color: var(--fg); }
+
+.toc-toggle .toc-icon-list,
+.toc-toggle .toc-icon-close {
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.toc-toggle .toc-icon-close {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.8);
+}
+
+.toc-toggle.active .toc-icon-list {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.8);
+}
+
+.toc-toggle.active .toc-icon-close {
+  opacity: 1;
+  transform: rotate(0) scale(1);
+}
+
+/* Mobile TOC Overlay */
+.toc-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 190;
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    touch-action: none;
+  }
+
+.toc-overlay.open {
+  opacity: 1;
+}
+
+.toc-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 195;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    padding: 1.5rem 1.5rem 2.5rem;
+    max-height: 55vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+.toc-panel.open {
+  transform: translateY(0);
+}
+
+.toc-panel-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: opacity 0.3s ease;
+  }
+
+.toc-panel-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 0 auto 1.2rem;
+}
+
+.toc-panel a {
+  display: block;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--fg-secondary);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: color 0.2s, background 0.15s;
+}
+
+.toc-panel a:hover {
+  color: var(--fg);
+  background: var(--code-bg);
+}
+
+.toc-panel a.active {
+  color: var(--fg);
+  font-weight: 500;
+}
+
+@media (max-width: 1099px) {
+  .toc-toggle {
+    display: flex;
+  }
+  .toc-overlay, .toc-panel {
+    display: block;
+  }
+  .toc-panel {
+    display: block;
+  }
+}
+
+/* ── Article Layout ── */
+.article {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 6rem 2rem 8rem;
+}
+
+/* Wide screen: shift article right, show sidebar */
+@media (min-width: 1100px) {
+  .sidebar {
+    display: block;
+    left: calc(50% - 470px);
+  }
+    .article {
+      margin-left: calc(50% - 160px);
+      margin-right: auto;
+    }
+}
+
+/* ── Hero ── */
+.hero {
+    margin-bottom: 4rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+.hero h1 {
+  font-size: 2.8rem;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  margin-bottom: 1rem;
+}
+
+.hero .subtitle {
+  font-size: 1.15rem;
+  color: var(--fg-secondary);
+  font-weight: 400;
+  line-height: 1.5;
+  margin-bottom: 1.2rem;
+}
+
+.hero .note {
+    font-size: 0.85rem;
+    color: var(--fg-secondary);
+    font-style: italic;
+    margin-bottom: 0;
+  }
+
+/* ── Diagrams ── */
+.diagrams {
+  margin-bottom: 4rem;
+}
+
+.diagrams figure {
+  margin-bottom: 2rem;
+}
+
+.diagrams img {
+  width: 100%;
+  display: block;
+}
+
+.diagrams figcaption {
+  font-size: 0.8rem;
+  color: var(--fg-secondary);
+  margin-top: 0.6rem;
+  text-align: center;
+}
+
+/* ── Typography ── */
+h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  margin-top: 4rem;
+  margin-bottom: 1rem;
+  scroll-margin-top: 2.5rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  margin-top: 3rem;
+  margin-bottom: 0.8rem;
+}
+
+p {
+  margin-bottom: var(--spacing);
+}
+
+strong {
+  font-weight: 600;
+}
+
+em {
+  font-style: italic;
+  color: var(--fg-secondary);
+}
+
+a {
+  color: var(--fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--border);
+  transition: text-decoration-color 0.2s;
+}
+
+a:hover {
+  text-decoration-color: var(--fg);
+}
+
+/* ── Blockquote ── */
+blockquote {
+  border-left: 2px solid var(--blockquote-border);
+  padding-left: 1.5rem;
+  margin: 2rem 0;
+  font-style: italic;
+  color: var(--fg-secondary);
+}
+
+blockquote p {
+  margin-bottom: 0;
+}
+
+/* ── Lists ── */
+ol, ul {
+  margin-bottom: var(--spacing);
+  padding-left: 1.5rem;
+}
+
+li {
+  margin-bottom: 0.6rem;
+  line-height: 1.6;
+}
+
+li p {
+  margin-bottom: 0.4rem;
+}
+
+/* ── Code ── */
+code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--code-bg);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+}
+
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 10px;
+  padding: 1.4rem 1.6rem;
+  overflow-x: auto;
+  margin: 1.5rem 0 2rem;
+  line-height: 1.55;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.82rem;
+  color: var(--fg);
+}
+
+/* ── Horizontal Rule ── */
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 3.5rem 0;
+}
+
+/* ── Emphasis Paragraph (italic block) ── */
+.thought {
+  font-style: italic;
+  color: var(--fg-secondary);
+  line-height: 1.8;
+  margin: 1.5rem 0 var(--spacing);
+}
+
+/* ── Footer ── */
+.footer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+    color: var(--fg-secondary);
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    line-height: 1.8;
+  }
+
+.footer .author-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--fg);
+    letter-spacing: -0.01em;
+  }
+
+.footer .author-name-zh {
+    font-size: 0.88rem;
+    font-weight: 400;
+    color: var(--fg-secondary);
+  }
+
+.footer .footer-sep {
+    color: var(--border);
+    font-weight: 300;
+    margin: 0 0.15rem;
+  }
+
+.footer .github-link {
+    font-size: 0.82rem;
+    color: var(--fg-secondary);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1px;
+    transition: color 0.2s, border-color 0.2s;
+    margin-left: auto;
+  }
+
+.footer .github-link:hover {
+    color: var(--fg);
+    border-color: var(--fg);
+  }
+
+/* ── Code Block Wrapper ── */
+.code-block {
+    position: relative;
+    margin: 1.5rem 0 2rem;
+  }
+
+.code-block pre {
+    margin: 0;
+  }
+
+  .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--code-border);
+      border-radius: 6px;
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s ease, background 0.15s ease;
+      color: var(--fg-secondary);
+      padding: 0;
+    }
+
+  .code-block:hover .copy-btn {
+      opacity: 1;
+    }
+
+  @media (hover: none) and (pointer: coarse) {
+    .copy-btn {
+      opacity: 1;
+    }
+  }
+
+.copy-btn:hover {
+    background: rgba(255,255,255,0.95);
+    color: var(--fg);
+  }
+
+.copy-btn svg {
+    width: 16px;
+    height: 16px;
+    transition: opacity 0.15s ease, transform 0.2s ease;
+  }
+
+.copy-btn .icon-check {
+    position: absolute;
+    opacity: 0;
+    transform: scale(0.5);
+    color: #34c759;
+  }
+
+.copy-btn.copied .icon-copy {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+.copy-btn.copied .icon-check {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+/* ── Syntax Highlighting (Swift) ── */
+.token-keyword { color: #ad3da4; }
+.token-type { color: #4b21b0; }
+.token-string { color: #d12f1b; }
+.token-comment { color: #707f8c; font-style: italic; }
+.token-number { color: #1c00cf; }
+.token-attr { color: #643820; }
+.token-func { color: #326d74; }
+.token-property { color: #326d74; }
+.token-punctuation { color: #1d1d1f; }
+.token-operator { color: #1d1d1f; }
+.token-decorator { color: #ad3da4; }
+
+/* ── Section Transitions ── */
+.section {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Language visibility ── */
+[data-lang="en"], [data-lang="zh"] {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+[data-lang].lang-active {
+  display: block;
+}
+
+[data-lang].lang-visible {
+  opacity: 1;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1099px) {
+  .article {
+    padding-top: 10rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .article {
+    padding: 7rem 1.5rem 6rem;
+  }
+
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  pre {
+    padding: 1rem 1.2rem;
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 16px;
+  }
+
+  .hero h1 {
+    font-size: 1.7rem;
+  }
+
+  .article {
+    padding: 4.5rem 1.2rem 5rem;
+  }
+}
+
+/* ── Image Lightbox ── */
+.diagrams img {
+  cursor: zoom-in;
+}
+
+.lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.lightbox.open {
+  opacity: 1;
+}
+
+.lightbox img {
+  max-width: 90vw;
+  max-height: 75vh;
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+  background: #fff;
+  padding: 1rem;
+}
+
+.lightbox-toolbar {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.lightbox-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.lightbox-btn:hover {
+  background: rgba(255,255,255,0.3);
+  text-decoration: none;
+  color: #fff;
+}
+
+.lightbox-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ── Print ── */
+@media print {
+  .lang-fab, .sidebar-lang, .sidebar, .toc-toggle, .toc-overlay, .toc-panel, .lightbox { display: none !important; }
+  .section { opacity: 1; transform: none; }
+  .article { margin-left: auto; }
+}
+</style>
+</head>
+<body>
+
+<!-- Mobile TOC -->
+<button class="toc-toggle" id="toc-toggle" aria-label="Table of contents">
+  <svg class="toc-icon-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="3" y1="6" x2="21" y2="6"></line>
+    <line x1="3" y1="12" x2="15" y2="12"></line>
+    <line x1="3" y1="18" x2="10" y2="18"></line>
+  </svg>
+  <svg class="toc-icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18"></line>
+    <line x1="6" y1="6" x2="18" y2="18"></line>
+  </svg>
+</button>
+<div class="toc-overlay" id="toc-overlay"></div>
+<div class="toc-panel" id="toc-panel">
+  <div class="toc-panel-handle"></div>
+  <nav class="toc-panel-inner" id="toc-panel-nav"></nav>
+</div>
+
+<!-- Sidebar TOC -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-lang" id="sidebar-lang">
+    <div class="sidebar-lang-pill"></div>
+    <button id="side-btn-en" onclick="setLang('en')">EN</button>
+    <button id="side-btn-zh" onclick="setLang('zh')">中</button>
+  </div>
+  <nav class="sidebar-inner" id="sidebar-nav"></nav>
+</aside>
+
+<!-- Mobile Language FAB -->
+<div class="lang-fab" id="lang-fab">
+  <button class="lang-fab-trigger" id="lang-fab-trigger" aria-label="Switch language">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <ellipse cx="12" cy="12" rx="4" ry="10"></ellipse>
+      <line x1="2" y1="12" x2="22" y2="12"></line>
+    </svg>
+  </button>
+  <div class="lang-fab-menu" id="lang-fab-menu">
+    <button id="fab-btn-en" onclick="setLang('en')">EN</button>
+    <button id="fab-btn-zh" onclick="setLang('zh')">中</button>
+  </div>
+</div>
+
+<!-- ═══════════════════ ENGLISH ═══════════════════ -->
+<article class="article" data-lang="en">
+
+  <header class="hero section">
+    <h1>Why I didn't want my diary in the cloud</h1>
+    <p class="subtitle">Notes on offline semantic search + SwiftUI accessibility</p>
+    <p class="note">You can use the code in this post directly. If you publish something based on it, please leave attribution.</p>
+  </header>
+
+  <div class="diagrams section">
+    <figure>
+      <img src="assets/pipeline.svg" alt="On-device semantic retrieval pipeline">
+      <figcaption>On-device semantic retrieval pipeline</figcaption>
+    </figure>
+    <figure>
+      <img src="assets/a11y-flow.svg" alt="Accessibility flow for VoiceOver and Reduce Motion">
+      <figcaption>Accessibility flow for VoiceOver and Reduce Motion</figcaption>
+    </figure>
+  </div>
+
+  <section class="section">
+    <h2>Why I didn't want my diary in the cloud</h2>
+
+    <p>Before orchestra rehearsal, I can sit for twenty minutes stuck in this loop:</p>
+
+    <p class="thought">If I tell them the tempo feels wrong, will it help, or will everyone think I'm being annoying?<br>
+    If I stay quiet, will I feel better, or worse?</p>
+
+    <p>Overthinking isn't stupidity. It often means you have too many thoughts and nowhere to place them.</p>
+
+    <p>That's why I made Wen Gua. You type what's bothering you, draw a hexagram, and get a reading that helps you think through the mess. The whole flow takes about three minutes: long enough to help, short enough not to become another way to avoid deciding.</p>
+
+    <p>When I started building this, I realized two things had to be true:</p>
+
+    <ol>
+      <li><strong>The words you type need to stay on your phone.</strong><br>If you're making an app to help people think through worries, uploading those worries to a server feels wrong.</li>
+      <li><strong>It needs to work for everyone.</strong><br>I learned this the hard way when I realized my first version was almost unusable for anyone using VoiceOver.</li>
+    </ol>
+
+    <p>This post is basically my notes on the two hardest parts:</p>
+
+    <ul>
+      <li><strong>Making search work offline</strong> using Apple's <code>NaturalLanguage</code> framework</li>
+      <li><strong>Making the UI actually accessible</strong> for VoiceOver and Reduce Motion</li>
+    </ul>
+
+    <p>No servers, no accounts, no tracking. Just your phone doing the work.</p>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>What "semantic search" actually is</h2>
+
+    <p>"Semantic search" sounds fancy, but it means one simple thing:</p>
+
+    <blockquote><p>If two sentences mean the same thing, the app should know they're related—even if they use completely different words.</p></blockquote>
+
+    <p>Normal search looks for exact words. Semantic search looks for meaning.</p>
+
+    <p>You do this with an <strong>embedding</strong>: turn text into numbers, and if two pieces of text have similar meanings, their vectors stay close together.</p>
+
+    <p>That sounds abstract at first. Think of it as coordinates on a map, except the map represents meanings instead of places.</p>
+
+    <p>For Wen Gua, I only needed to search through a few hundred short snippets I wrote, so I kept it simple:</p>
+
+    <ul>
+      <li>Keep the database small</li>
+      <li>Write precise snippets</li>
+      <li>Keep the search code simple</li>
+      <li>Make everything work offline</li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>What NaturalLanguage and NLEmbedding do</h2>
+
+    <p>Apple's <strong>NaturalLanguage</strong> framework provides on-device text tools: language detection, word tokenization, and part-of-speech tagging.</p>
+
+    <p>The specific part I needed is <code>NLEmbedding</code>, which turns text into those number coordinates I mentioned. There are two main ones:</p>
+
+    <ul>
+      <li><code>NLEmbedding.sentenceEmbedding(for:)</code> for whole sentences</li>
+      <li><code>NLEmbedding.wordEmbedding(for:)</code> for individual words</li>
+    </ul>
+
+    <p>One thing I learned the hard way: these embeddings are not always available. They might not exist for every language or every device, so your code has to handle that path.</p>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>How I built it</h2>
+
+    <p>Some people would call this "RAG" (retrieval-augmented generation). In Wen Gua, there is no large model writing content from scratch. I wrote all the readings myself, and the app retrieves the best matches.</p>
+
+    <p>I actually prefer it this way. It feels more honest.</p>
+
+    <p>Here's how it works:</p>
+
+    <ol>
+      <li><strong>Parse</strong> what the person typed to make it cleaner for searching</li>
+      <li><strong>Sense</strong> the tone (so I can respond with the right feeling)</li>
+      <li><strong>Embed</strong> the question into numbers</li>
+      <li><strong>Retrieve</strong> the best matching readings</li>
+      <li><strong>Compose</strong> everything into a structured response</li>
+      <li><strong>Format</strong> it so it looks good and works with VoiceOver</li>
+    </ol>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>Step 1: Getting the embedding</h2>
+
+    <pre><code>import NaturalLanguage
+
+func sentenceVector(for text: String) -&gt; [Double]? {
+    guard let embedding = NLEmbedding.sentenceEmbedding(for: .english) else {
+        return nil
+    }
+    return embedding.vector(for: text)
+}</code></pre>
+
+    <p>Two things that took me forever to figure out:</p>
+
+    <ul>
+      <li><code>NLEmbedding.sentenceEmbedding(for:)</code> can fail and return <code>nil</code>. That's normal.</li>
+      <li>The result is <code>[Double]?</code> but I found converting to <code>Float</code> saves memory and makes the math faster.</li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <section class="section">
+      <h2>Step 2: Caching embeddings (this made everything way faster)</h2>
+
+    <p>I was recomputing the same embeddings over and over. It was so slow.</p>
+
+    <p>Then I learned you can cache them:</p>
+
+    <ul>
+      <li>Put query embeddings in an <code>NSCache</code></li>
+      <li>Store both the numbers and the "length" (called L2 norm)</li>
+      <li>Make sure it's thread-safe because Swift is picky about that</li>
+    </ul>
+
+    <pre><code>import Foundation
+import NaturalLanguage
+
+/// Thread-safe, shared embedding cache.
+final class SentenceEmbeddingCache: @unchecked Sendable {
+    static let shared = SentenceEmbeddingCache()
+
+    struct Entry {
+        let vector: [Float]
+        let norm: Float
+    }
+
+    private let embedding = NLEmbedding.sentenceEmbedding(for: .english)
+    private let cache = NSCache&lt;NSString, EmbeddingBox&gt;()
+    private let lock = NSLock()
+
+    var isAvailable: Bool { embedding != nil }
+
+    enum CachePolicy { case store, noStore }
+
+    private init() {
+        cache.countLimit = 512
+    }
+
+    func vector(for text: String, policy: CachePolicy = .store) -&gt; Entry? {
+        guard let embedding else { return nil }
+        let key = text as NSString
+
+        if policy == .store, let cached = cache.object(forKey: key) {
+            return cached.value
+        }
+
+        lock.lock()
+        defer { lock.unlock() }
+
+        if policy == .store, let cached = cache.object(forKey: key) {
+            return cached.value
+        }
+
+        guard let v = embedding.vector(for: text) else { return nil }
+        let floats = v.map(Float.init)
+        let entry = Entry(vector: floats, norm: VectorMath.l2Norm(floats))
+
+        if policy == .store {
+            cache.setObject(EmbeddingBox(entry), forKey: key)
+        }
+
+        return entry
+    }
+
+    func clearAll() {
+        lock.lock()
+        defer { lock.unlock() }
+        cache.removeAllObjects()
+    }
+}
+
+private final class EmbeddingBox: NSObject {
+    let value: SentenceEmbeddingCache.Entry
+    init(_ value: SentenceEmbeddingCache.Entry) { self.value = value }
+}
+
+enum VectorMath {
+    static func l2Norm(_ v: [Float]) -&gt; Float {
+        var sum: Float = 0
+        for x in v { sum += x * x }
+        return sqrt(sum)
+    }
+
+    static func cosine(_ a: [Float], _ b: [Float], normA: Float, normB: Float) -&gt; Float {
+        guard a.count == b.count, !a.isEmpty else { return 0 }
+        let denom = normA * normB
+        guard denom &gt; 0 else { return 0 }
+
+        var dot: Float = 0
+        for i in 0..&lt;a.count { dot += a[i] * b[i] }
+        return dot / denom
+    }
+}</code></pre>
+
+    <p>This code is boring on purpose. Boring infrastructure code is good.</p>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>Step 3: Building the search index</h2>
+
+    <p>For small databases like mine (a few hundred items), you don't need complex infrastructure:</p>
+
+    <ul>
+      <li>Turn the query into an embedding once</li>
+      <li>For each document: calculate similarity, boost tags, boost category</li>
+      <li>Sort by score, take the top results</li>
+    </ul>
+
+    <pre><code>import Foundation
+
+struct SemanticDoc&lt;ID: Hashable&gt; {
+    let id: ID
+    let text: String
+    let tags: [String]
+    let category: String?
+}
+
+final class SemanticIndex&lt;ID: Hashable&gt;: @unchecked Sendable {
+    private let cache: SentenceEmbeddingCache
+    private let docs: [SemanticDoc&lt;ID&gt;]
+
+    private let docEmbeddings: [(v: [Float], n: Float)?]
+    private let tagsLower: [[String]]
+
+    init(docs: [SemanticDoc&lt;ID&gt;], cache: SentenceEmbeddingCache = .shared) {
+        self.cache = cache
+        self.docs = docs
+
+        if cache.isAvailable {
+            var out: [(v: [Float], n: Float)?] = []
+            out.reserveCapacity(docs.count)
+            for d in docs {
+                if let e = cache.vector(for: d.text, policy: .noStore) {
+                    out.append((e.vector, e.norm))
+                } else {
+                    out.append(nil)
+                }
+            }
+            self.docEmbeddings = out
+        } else {
+            self.docEmbeddings = Array(repeating: nil, count: docs.count)
+        }
+
+        self.tagsLower = docs.map { $0.tags.map { $0.lowercased() } }
+    }
+
+    func search(
+        query: String,
+        keywords: [String] = [],
+        category: String? = nil,
+        topK: Int = 3
+    ) -&gt; [SemanticDoc&lt;ID&gt;] {
+        let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !q.isEmpty else { return [] }
+
+        let qLower = q.lowercased()
+        let keywordSet = Set(keywords.map { $0.lowercased() })
+
+        guard let qEmbed = cache.vector(for: q) else {
+            return docs
+                .enumerated()
+                .map { i, d in (d, tagScore(tagsLower[i], keywordSet, qLower, category, d.category)) }
+                .sorted { $0.1 &gt; $1.1 }
+                .prefix(topK)
+                .map { $0.0 }
+        }
+
+        var scored: [(SemanticDoc&lt;ID&gt;, Float)] = []
+        scored.reserveCapacity(docs.count)
+
+        for i in docs.indices {
+            let boost = tagScore(tagsLower[i], keywordSet, qLower, category, docs[i].category)
+            guard let dv = docEmbeddings[i] else {
+                scored.append((docs[i], boost))
+                continue
+            }
+
+            let sim = VectorMath.cosine(qEmbed.vector, dv.v, normA: qEmbed.norm, normB: dv.n)
+            scored.append((docs[i], sim + boost))
+        }
+
+        return scored
+            .sorted { $0.1 &gt; $1.1 }
+            .prefix(topK)
+            .map { $0.0 }
+    }
+
+    private func tagScore(
+        _ tags: [String],
+        _ keywordSet: Set&lt;String&gt;,
+        _ queryLower: String,
+        _ queryCategory: String?,
+        _ docCategory: String?
+    ) -&gt; Float {
+        var s: Float = 0
+
+        let tokens = Set(
+            queryLower.split { !$0.isLetter &amp;&amp; !$0.isNumber }
+                .map { String($0) }
+        )
+
+        for t in tags {
+            if t.contains(" ") {
+                if queryLower.contains(t) { s += 0.06 }
+            } else if tokens.contains(t) {
+                s += 0.06
+            }
+            if keywordSet.contains(t) { s += 0.05 }
+        }
+
+        if let qc = queryCategory?.lowercased(),
+           let dc = docCategory?.lowercased(),
+           qc == dc {
+            s += 0.08
+        }
+
+        return s
+    }
+}</code></pre>
+
+    <p>The things happening quietly here:</p>
+
+    <ul>
+      <li><strong>Precomputing</strong> everything once at startup keeps the search fast</li>
+      <li><strong>Hybrid scoring</strong> (combining semantic similarity with keyword matching) makes it feel more accurate</li>
+      <li><strong>Category boost</strong> helps but doesn't force results into the wrong category</li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>Step 4: Extracting better keywords with NLTagger</h2>
+
+    <p>Semantic search is useful, but people sometimes use very specific words you still want to catch.</p>
+
+    <p>I use <code>NLTagger</code> to pull out the important words (and their "root" forms):</p>
+
+    <pre><code>import NaturalLanguage
+
+func extractKeywords(_ text: String) -&gt; [String] {
+    let tagger = NLTagger(tagSchemes: [.lexicalClass, .lemma])
+    tagger.string = text
+
+    let options: NLTagger.Options = [.omitWhitespace, .omitPunctuation, .joinNames]
+    var counts: [String: Int] = [:]
+
+    tagger.enumerateTags(in: text.startIndex..&lt;text.endIndex,
+                         unit: .word,
+                         scheme: .lexicalClass,
+                         options: options) { tag, range in
+        guard let tag else { return true }
+        guard tag == .noun || tag == .verb || tag == .adjective else { return true }
+
+        let raw = String(text[range]).lowercased()
+        guard raw.count &gt;= 3 else { return true }
+
+        let (lemma, _) = tagger.tag(at: range.lowerBound, unit: .word, scheme: .lemma)
+        let key = (lemma?.rawValue ?? raw).lowercased()
+
+        counts[key, default: 0] += 1
+        return true
+    }
+
+    return counts
+        .sorted { $0.value &gt; $1.value }
+        .map { $0.key }
+        .prefix(8)
+        .map { $0 }
+}</code></pre>
+
+    <p>This extractor is an English-first heuristic. For Chinese text, you'll usually need extra tokenization or custom rules.</p>
+
+    <p>If you want to improve this, add a stopword list (for example, filtering out "the", "a", and "is"). The structure stays the same.</p>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>Step 5: Putting it all together</h2>
+
+    <pre><code>struct Analysis {
+    let cleanedQuery: String
+    let keywords: [String]
+    let category: String
+}
+
+func analyzeQuestion(_ q: String) -&gt; Analysis {
+    let cleaned = q.trimmingCharacters(in: .whitespacesAndNewlines)
+    let keywords = extractKeywords(cleaned)
+    let category = "general"
+    return Analysis(cleanedQuery: cleaned, keywords: keywords, category: category)
+}
+
+let frames = SemanticIndex(docs: [
+    SemanticDoc(id: "reach-out-ex",
+                text: "Should I text my ex?",
+                tags: ["text", "ex", "message", "contact"],
+                category: "love"),
+    SemanticDoc(id: "accept-offer",
+                text: "Should I accept this job offer?",
+                tags: ["offer", "job", "accept", "career"],
+                category: "career"),
+])
+
+let advice = SemanticIndex(docs: [
+    SemanticDoc(id: "decision-deadline",
+                text: "Set a day to decide. Indecision leaks time; choose with what you know, then adjust with what you learn.",
+                tags: ["stuck", "delay", "decide"],
+                category: "decision"),
+])
+
+let a = analyzeQuestion("I keep thinking about texting my ex. Should I do it?")
+let bestFrame = frames.search(query: a.cleanedQuery, keywords: a.keywords, category: a.category, topK: 1).first
+let bestAdvice = advice.search(query: a.cleanedQuery, keywords: a.keywords, category: a.category, topK: 2)</code></pre>
+
+    <p>Notice what's NOT happening:</p>
+
+    <ul>
+      <li>No network request</li>
+      <li>No giant AI model</li>
+      <li>No black box magic</li>
+    </ul>
+
+    <p>You can make something that feels smart with just a small database and clean code.</p>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>Random things I learned</h2>
+
+    <ol>
+      <li>
+        <p><strong>Warm up the embeddings early</strong><br>
+        The first time you use embeddings it's slow because of lazy initialization. In Wen Gua I start loading them during the card animation so the app feels smooth.</p>
+        <pre><code>Task.detached(priority: .utility) {
+    _ = SentenceEmbeddingCache.shared.vector(for: "warm up")
+}</code></pre>
+      </li>
+      <li><p><strong>Don't use <code>lazy var</code> if you're using it from background tasks</strong><br>
+        I ran into weird crashes until I figured this out. Just compute everything in <code>init()</code>.</p></li>
+      <li><p><strong>Make your app work even when embeddings fail</strong><br>
+        Sometimes they are not available. Your app should still do something useful.</p></li>
+      <li><p><strong>The quality of your search is limited by the quality of your writing</strong><br>
+        Semantic search can't rescue weak snippets. I rewrote mine five times.</p></li>
+      <li><p><strong>Have a way to clear the cache under memory pressure</strong><br>
+        Add <code>clearAll()</code> and call it from your app's memory warning path so cached vectors can be dropped quickly.</p></li>
+    </ol>
+  </section>
+
+  <hr>
+
+  <section class="section">
+      <h2>Making it work for everyone (accessibility stuff)</h2>
+
+    <p>I thought my app looked calm and minimal. Then I tested it with VoiceOver and realized it was basically unusable.</p>
+
+    <p>Turns out:</p>
+
+    <ul>
+      <li>"Calm" can still exclude people</li>
+      <li>"Beautiful animations" can make some people nauseous</li>
+      <li>"Minimal UI" can be meaningless to screen readers</li>
+    </ul>
+
+    <p>Accessibility isn't something you add at the end. It's structure.</p>
+
+    <p>My approach in Wen Gua:</p>
+
+    <ul>
+      <li>One state machine (same logic, same steps)</li>
+      <li>Two ways to show it:
+        <ul>
+          <li>Rich animations for people who want them</li>
+          <li>A VoiceOver/Reduce Motion friendly version that keeps the meaning without the motion</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>Reading accessibility settings in SwiftUI</h2>
+
+    <pre><code>import SwiftUI
+
+struct RitualView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+
+    var isA11yMode: Bool { reduceMotion || voiceOverEnabled }
+
+    var body: some View {
+        Text(isA11yMode ? "Accessible path" : "Default path")
+    }
+}</code></pre>
+
+    <p>The key idea: adapt the UI, don't fork it into two completely separate versions.</p>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>A helper for animations that respect Reduce Motion</h2>
+
+    <p>Reduce Motion doesn't mean "zero animation." It means "avoid unnecessary movement."</p>
+
+    <p>Gentle opacity fades are usually fine. Big spinning 3D rotations are not.</p>
+
+    <pre><code>import SwiftUI
+
+private struct AppAnimationModifier&lt;Value: Equatable&gt;: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let animation: Animation?
+    let reducedAnimation: Animation?
+    let value: Value
+
+    func body(content: Content) -&gt; some View {
+        content.animation(reduceMotion ? reducedAnimation : animation, value: value)
+    }
+}
+
+extension View {
+    func appAnimation&lt;V: Equatable&gt;(
+        _ animation: Animation?,
+        reducedAnimation: Animation? = nil,
+        value: V
+    ) -&gt; some View {
+        modifier(AppAnimationModifier(animation: animation, reducedAnimation: reducedAnimation, value: value))
+    }
+}</code></pre>
+
+    <p>Use it this way:</p>
+
+    <pre><code>struct RevealExample: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var revealed = false
+
+    var body: some View {
+        Text("The lines are drawn")
+            .opacity(revealed ? 1 : 0)
+            .transition(reduceMotion ? .opacity : .scale.combined(with: .opacity))
+            .appAnimation(.easeInOut(duration: 0.3),
+                          reducedAnimation: .easeInOut(duration: 0.2),
+                          value: revealed)
+            .onAppear {
+                withAnimation {
+                    revealed = true
+                }
+            }
+    }
+}</code></pre>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>Hiding decorative stuff from VoiceOver</h2>
+
+    <p>If something is purely visual—glows, particle effects, background canvases—hide it:</p>
+
+    <pre><code>Canvas { context, size in
+    // Decorative drawing
+}
+.accessibilityHidden(true)</code></pre>
+
+    <p>Then make the semantic info clear with labels, hints, and logical focus order.</p>
+  </section>
+
+  <hr>
+
+  <section class="section">
+      <h2>Announcing key moments (VoiceOver is a conversation)</h2>
+
+    <p>Animations show progress visually. VoiceOver needs an equivalent.</p>
+
+    <pre><code>import UIKit
+
+enum A11y {
+    static func announce(_ message: String) {
+        DispatchQueue.main.async {
+            UIAccessibility.post(notification: .announcement, argument: message)
+        }
+    }
+}</code></pre>
+
+    <p>When the ritual reaches the reveal:</p>
+
+    <pre><code>if voiceOverEnabled {
+    A11y.announce("The lines are drawn")
+}</code></pre>
+
+    <p>Keep it short. Let it breathe.</p>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>One ritual, two ways to show it</h2>
+
+    <p>This is what I do in Wen Gua's card animation:</p>
+
+    <ul>
+      <li>If Motion is on: show the full card stack animation</li>
+      <li>If Reduce Motion or VoiceOver is on:
+        <ul>
+          <li>Still do the same steps internally</li>
+          <li>Show the final card with a simple fade</li>
+          <li>Announce it's done</li>
+        </ul>
+      </li>
+    </ul>
+
+    <pre><code>import SwiftUI
+
+struct CardRevealView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+
+    @State private var revealed = false
+    @AccessibilityFocusState private var focusFinalCard: Bool
+
+    var body: some View {
+        ZStack {
+            AnimatedStack()
+                .accessibilityHidden(true)
+                .opacity((reduceMotion || voiceOverEnabled) ? 0 : 1)
+
+            FinalCard()
+                .opacity((reduceMotion || voiceOverEnabled) ? (revealed ? 1 : 0) : 0)
+                .accessibilityLabel("Hexagram card")
+                .accessibilityFocused($focusFinalCard)
+        }
+        .onAppear { run() }
+    }
+
+    private func run() {
+        if reduceMotion || voiceOverEnabled {
+            withAnimation(.easeInOut(duration: 0.22)) {
+                revealed = true
+            }
+            if voiceOverEnabled {
+                focusFinalCard = true
+                A11y.announce("The lines are drawn")
+            }
+        } else {
+            // Run the rich animation path.
+        }
+    }
+}
+
+private struct AnimatedStack: View { var body: some View { Color.clear } }
+private struct FinalCard: View { var body: some View { Color.clear } }</code></pre>
+
+    <p>The important part isn't the visuals.<br>
+    It's telling <strong>the same story in a way the person can actually receive.</strong></p>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>Being honest about how it works</h2>
+
+    <p>I added a "How it works" screen to Wen Gua that shows the whole pipeline: parsing, embedding, retrieval, formatting.</p>
+
+    <p>People deserve to know what happens to their words.</p>
+    </section>
+
+    <hr>
+
+    <section class="section">
+      <h2>License</h2>
+      <ul>
+        <li>Code: MIT</li>
+        <li>Writing: CC BY 4.0</li>
+      </ul>
+    </section>
+
+    <hr>
+
+    <section class="section">
+      <h2>Why I care about this</h2>
+
+    <p>"On-device intelligence" gets marketed as a feature.</p>
+
+    <p>I think of it more as basic decency.</p>
+
+    <p>The private thoughts people type into my app aren't training data.<br>
+    Their accessibility settings aren't inconveniences.<br>
+    Their attention isn't a resource to extract.</p>
+
+    <p>I'm 14 and I've been coding since I was little, but music taught me something code tutorials didn't: the space between notes matters as much as the notes themselves.</p>
+
+    <p>Wen Gua is that space. A place to breathe before deciding. A ritual that respects the I Ching without gatekeeping it. A reminder that not everything needs to be in the cloud.</p>
+
+    <p>I spent months rebuilding this app to make it fully accessible and completely offline because I think your doubts deserve privacy and your decisions deserve dignity.</p>
+    </section>
+
+      <footer class="footer section">
+        <div class="author-name">Yuze Pan</div>
+        <span class="footer-sep">/</span>
+        <div class="author-name-zh">潘禹泽</div>
+        <a class="github-link" href="https://github.com/yuzeguitarist" target="_blank" rel="noopener">GitHub</a>
+      </footer>
+
+</article>
+
+<!-- ═══════════════════ CHINESE ═══════════════════ -->
+<article class="article" data-lang="zh">
+
+  <header class="hero section">
+    <h1>为什么我不想把日记传到云端</h1>
+    <p class="subtitle">离线语义搜索 + SwiftUI 无障碍笔记</p>
+    <p class="note">本文代码可直接使用。如果你基于它发布了什么,请保留署名。</p>
+  </header>
+
+  <div class="diagrams section">
+    <figure>
+      <img src="assets/pipeline.svg" alt="端侧语义检索流程">
+      <figcaption>端侧语义检索流程</figcaption>
+    </figure>
+    <figure>
+      <img src="assets/a11y-flow.svg" alt="VoiceOver 与 Reduce Motion 无障碍流程">
+      <figcaption>VoiceOver 与 Reduce Motion 无障碍流程</figcaption>
+    </figure>
+  </div>
+
+  <section class="section">
+    <h2>为什么我不想把日记传到云端</h2>
+
+    <p>排练前会发生一个很奇怪的事。我能在那坐二十分钟,脑子里一直转:</p>
+
+    <p class="thought">如果我说节奏有问题,会不会让大家觉得我很烦?<br>
+    如果我不说,会不会更后悔?</p>
+
+    <p>过度思考不是因为笨。是因为想法太多了,没地方放。</p>
+
+    <p>所以我做了 <strong>Wen Gua(问卦)</strong>。你输入困扰,抽个卦,然后看到一段文字——不是预测,是帮你把混乱理清楚。整个过程三分钟左右:够长到有用,够短到不会变成另一种逃避。</p>
+
+    <p>做这个的时候我发现两件事必须做到:</p>
+
+    <ol>
+      <li><strong>你打的字要留在你手机里。</strong><br>想想看,如果一个帮你思考问题的app把你的困扰上传到服务器,这不是很奇怪吗?</li>
+      <li><strong>要对所有人友好。</strong><br>我第一版做完发现VoiceOver用户根本用不了,那时候才意识到这个问题。</li>
+    </ol>
+
+    <p>这篇文章是我做这两个最难部分的笔记:</p>
+
+    <ul>
+      <li>用 Apple 的 <code>NaturalLanguage</code> <strong>让搜索离线工作</strong></li>
+      <li>让 UI <strong>真的能用</strong> (VoiceOver 和 Reduce Motion)</li>
+    </ul>
+
+    <p>没有服务器,没有账号,没有追踪。就是你的手机在干活。</p>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>"语义搜索"是什么</h2>
+
+    <p>"语义搜索"听起来很高级,其实就是:</p>
+
+    <blockquote><p>如果两句话意思差不多,app应该知道它们有关系——哪怕用的词完全不一样。</p></blockquote>
+
+    <p>普通搜索找的是字。语义搜索找的是意思。</p>
+
+    <p>实现方法是用 <strong>embedding</strong>(嵌入向量)——把文字变成一串数字,如果两段文字意思接近,它们的数字就会靠得很近。</p>
+
+    <p>我知道这听起来很抽象。你可以想象成坐标,但不是地图上的坐标,是"意思的坐标"。</p>
+
+    <p>Wen Gua 只需要搜索我写的几百条短文本。所以不需要复杂的东西。就是:</p>
+
+    <ul>
+      <li>数据库要小</li>
+      <li>文本要写得好</li>
+      <li>搜索代码要简单</li>
+      <li>全程离线</li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>NaturalLanguage 和 NLEmbedding 是干什么的</h2>
+
+    <p>Apple 的 <strong>NaturalLanguage</strong> 框架给你一堆处理文本的工具:识别语言、分词、词性标注这些。</p>
+
+    <p>我需要的是 <code>NLEmbedding</code>,它把文字变成那些"数字坐标"。主要用这两个:</p>
+
+    <ul>
+      <li><code>NLEmbedding.sentenceEmbedding(for:)</code> 处理整句话</li>
+      <li><code>NLEmbedding.wordEmbedding(for:)</code> 处理单个词</li>
+    </ul>
+
+    <p>有个坑我踩了很久: 这些 embedding 不是一直能用的。有些语言或设备上就是没有。所以代码要能处理这种情况。</p>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>我怎么做的</h2>
+
+    <p>有人把这种叫 "RAG"(检索增强生成)。但 Wen Gua 里没有大模型从零写文字。所有内容都是我自己写的,app 只是找出最合适的。</p>
+
+    <p>我其实更喜欢这样。感觉更诚实。</p>
+
+    <p>流程是这样:</p>
+
+    <ol>
+      <li><strong>Parse</strong> 清理用户输入,让它更好搜</li>
+      <li><strong>Sense</strong> 识别语气(这样回复能更贴切)</li>
+      <li><strong>Embed</strong> 把问题变成数字</li>
+      <li><strong>Retrieve</strong> 找最匹配的内容</li>
+      <li><strong>Compose</strong> 组成完整的回答</li>
+      <li><strong>Format</strong> 排版,确保 VoiceOver 能读</li>
+    </ol>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>第一步:获取 embedding</h2>
+
+    <pre><code>import NaturalLanguage
+
+func sentenceVector(for text: String) -&gt; [Double]? {
+    guard let embedding = NLEmbedding.sentenceEmbedding(for: .english) else {
+        return nil
+    }
+    return embedding.vector(for: text)
+}</code></pre>
+
+    <p>两个我花了很久才搞懂的事:</p>
+
+    <ul>
+      <li><code>NLEmbedding.sentenceEmbedding(for:)</code> 可能就是不行。返回 <code>nil</code> 是正常的。</li>
+      <li>返回值是 <code>[Double]?</code> 但我发现转成 <code>Float</code> 能省内存,算得也快。</li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <section class="section">
+      <h2>第二步:缓存 embedding(这让速度快了很多)</h2>
+
+    <p>我一开始一直在重复计算同样的 embedding。超级慢。</p>
+
+    <p>后来我学会了缓存:</p>
+
+    <ul>
+      <li>把 query embedding 放在 <code>NSCache</code> 里</li>
+      <li>同时存数字和"长度"(L2 范数)</li>
+      <li>确保线程安全,因为 Swift 对这个很严格</li>
+    </ul>
+
+    <pre><code>import Foundation
+import NaturalLanguage
+
+/// Thread-safe, shared embedding cache.
+final class SentenceEmbeddingCache: @unchecked Sendable {
+    static let shared = SentenceEmbeddingCache()
+
+    struct Entry {
+        let vector: [Float]
+        let norm: Float
+    }
+
+    private let embedding = NLEmbedding.sentenceEmbedding(for: .english)
+    private let cache = NSCache&lt;NSString, EmbeddingBox&gt;()
+    private let lock = NSLock()
+
+    var isAvailable: Bool { embedding != nil }
+
+    enum CachePolicy { case store, noStore }
+
+    private init() {
+        cache.countLimit = 512
+    }
+
+    func vector(for text: String, policy: CachePolicy = .store) -&gt; Entry? {
+        guard let embedding else { return nil }
+        let key = text as NSString
+
+        if policy == .store, let cached = cache.object(forKey: key) {
+            return cached.value
+        }
+
+        lock.lock()
+        defer { lock.unlock() }
+
+        if policy == .store, let cached = cache.object(forKey: key) {
+            return cached.value
+        }
+
+        guard let v = embedding.vector(for: text) else { return nil }
+        let floats = v.map(Float.init)
+        let entry = Entry(vector: floats, norm: VectorMath.l2Norm(floats))
+
+        if policy == .store {
+            cache.setObject(EmbeddingBox(entry), forKey: key)
+        }
+
+        return entry
+    }
+
+    func clearAll() {
+        lock.lock()
+        defer { lock.unlock() }
+        cache.removeAllObjects()
+    }
+}
+
+private final class EmbeddingBox: NSObject {
+    let value: SentenceEmbeddingCache.Entry
+    init(_ value: SentenceEmbeddingCache.Entry) { self.value = value }
+}
+
+enum VectorMath {
+    static func l2Norm(_ v: [Float]) -&gt; Float {
+        var sum: Float = 0
+        for x in v { sum += x * x }
+        return sqrt(sum)
+    }
+
+    static func cosine(_ a: [Float], _ b: [Float], normA: Float, normB: Float) -&gt; Float {
+        guard a.count == b.count, !a.isEmpty else { return 0 }
+        let denom = normA * normB
+        guard denom &gt; 0 else { return 0 }
+
+        var dot: Float = 0
+        for i in 0..&lt;a.count { dot += a[i] * b[i] }
+        return dot / denom
+    }
+}</code></pre>
+
+    <p>这段代码故意写得很无聊。基础设施代码无聊是好事。</p>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>第三步:搭建搜索索引</h2>
+
+    <p>对于像我这样的小数据库(几百条),不需要复杂的东西。就是:</p>
+
+    <ul>
+      <li>query embedding 只算一次</li>
+      <li>对每个文档:算相似度,tag 匹配加分,类别匹配加分</li>
+      <li>排序,取前几个</li>
+    </ul>
+
+    <pre><code>import Foundation
+
+struct SemanticDoc&lt;ID: Hashable&gt; {
+    let id: ID
+    let text: String
+    let tags: [String]
+    let category: String?
+}
+
+final class SemanticIndex&lt;ID: Hashable&gt;: @unchecked Sendable {
+    private let cache: SentenceEmbeddingCache
+    private let docs: [SemanticDoc&lt;ID&gt;]
+
+    private let docEmbeddings: [(v: [Float], n: Float)?]
+    private let tagsLower: [[String]]
+
+    init(docs: [SemanticDoc&lt;ID&gt;], cache: SentenceEmbeddingCache = .shared) {
+        self.cache = cache
+        self.docs = docs
+
+        if cache.isAvailable {
+            var out: [(v: [Float], n: Float)?] = []
+            out.reserveCapacity(docs.count)
+            for d in docs {
+                if let e = cache.vector(for: d.text, policy: .noStore) {
+                    out.append((e.vector, e.norm))
+                } else {
+                    out.append(nil)
+                }
+            }
+            self.docEmbeddings = out
+        } else {
+            self.docEmbeddings = Array(repeating: nil, count: docs.count)
+        }
+
+        self.tagsLower = docs.map { $0.tags.map { $0.lowercased() } }
+    }
+
+    func search(
+        query: String,
+        keywords: [String] = [],
+        category: String? = nil,
+        topK: Int = 3
+    ) -&gt; [SemanticDoc&lt;ID&gt;] {
+        let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !q.isEmpty else { return [] }
+
+        let qLower = q.lowercased()
+        let keywordSet = Set(keywords.map { $0.lowercased() })
+
+        guard let qEmbed = cache.vector(for: q) else {
+            return docs
+                .enumerated()
+                .map { i, d in (d, tagScore(tagsLower[i], keywordSet, qLower, category, d.category)) }
+                .sorted { $0.1 &gt; $1.1 }
+                .prefix(topK)
+                .map { $0.0 }
+        }
+
+        var scored: [(SemanticDoc&lt;ID&gt;, Float)] = []
+        scored.reserveCapacity(docs.count)
+
+        for i in docs.indices {
+            let boost = tagScore(tagsLower[i], keywordSet, qLower, category, docs[i].category)
+            guard let dv = docEmbeddings[i] else {
+                scored.append((docs[i], boost))
+                continue
+            }
+
+            let sim = VectorMath.cosine(qEmbed.vector, dv.v, normA: qEmbed.norm, normB: dv.n)
+            scored.append((docs[i], sim + boost))
+        }
+
+        return scored
+            .sorted { $0.1 &gt; $1.1 }
+            .prefix(topK)
+            .map { $0.0 }
+    }
+
+    private func tagScore(
+        _ tags: [String],
+        _ keywordSet: Set&lt;String&gt;,
+        _ queryLower: String,
+        _ queryCategory: String?,
+        _ docCategory: String?
+    ) -&gt; Float {
+        var s: Float = 0
+
+        let tokens = Set(
+            queryLower.split { !$0.isLetter &amp;&amp; !$0.isNumber }
+                .map { String($0) }
+        )
+
+        for t in tags {
+            if t.contains(" ") {
+                if queryLower.contains(t) { s += 0.06 }
+            } else if tokens.contains(t) {
+                s += 0.06
+            }
+            if keywordSet.contains(t) { s += 0.05 }
+        }
+
+        if let qc = queryCategory?.lowercased(),
+           let dc = docCategory?.lowercased(),
+           qc == dc {
+            s += 0.08
+        }
+
+        return s
+    }
+}</code></pre>
+
+    <p>几个在默默工作的部分:</p>
+
+    <ul>
+      <li><strong>预计算</strong> 启动时算一次,保持搜索快速</li>
+      <li><strong>混合打分</strong> (语义相似度 + 关键词匹配) 让结果更准</li>
+      <li><strong>类别加分</strong> 有帮助但不会强行塞结果</li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>第四步:用 NLTagger 提取更好的关键词</h2>
+
+    <p>语义搜索很厉害,但有时候人们用很具体的词,你也想抓住那些。</p>
+
+    <p>我用 <code>NLTagger</code> 提取重要的词(还有它们的"词根"):</p>
+
+    <pre><code>import NaturalLanguage
+
+func extractKeywords(_ text: String) -&gt; [String] {
+    let tagger = NLTagger(tagSchemes: [.lexicalClass, .lemma])
+    tagger.string = text
+
+    let options: NLTagger.Options = [.omitWhitespace, .omitPunctuation, .joinNames]
+    var counts: [String: Int] = [:]
+
+    tagger.enumerateTags(in: text.startIndex..&lt;text.endIndex,
+                         unit: .word,
+                         scheme: .lexicalClass,
+                         options: options) { tag, range in
+        guard let tag else { return true }
+        guard tag == .noun || tag == .verb || tag == .adjective else { return true }
+
+        let raw = String(text[range]).lowercased()
+        guard raw.count &gt;= 3 else { return true }
+
+        let (lemma, _) = tagger.tag(at: range.lowerBound, unit: .word, scheme: .lemma)
+        let key = (lemma?.rawValue ?? raw).lowercased()
+
+        counts[key, default: 0] += 1
+        return true
+    }
+
+    return counts
+        .sorted { $0.value &gt; $1.value }
+        .map { $0.key }
+        .prefix(8)
+        .map { $0 }
+}</code></pre>
+
+    <p>这个 <code>extractKeywords</code> 本质是英文优先的启发式,对中文提词通常会比较弱,需要额外分词或规则。</p>
+
+    <p>要做得更好的话,加个停用词表(过滤掉"的"、"是"这些)。但整体结构不会变。</p>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>第五步:把它拼起来</h2>
+
+    <pre><code>struct Analysis {
+    let cleanedQuery: String
+    let keywords: [String]
+    let category: String
+}
+
+func analyzeQuestion(_ q: String) -&gt; Analysis {
+    let cleaned = q.trimmingCharacters(in: .whitespacesAndNewlines)
+    let keywords = extractKeywords(cleaned)
+    let category = "general"
+    return Analysis(cleanedQuery: cleaned, keywords: keywords, category: category)
+}
+
+let frames = SemanticIndex(docs: [
+    SemanticDoc(id: "reach-out-ex",
+                text: "Should I text my ex?",
+                tags: ["text", "ex", "message", "contact"],
+                category: "love"),
+    SemanticDoc(id: "accept-offer",
+                text: "Should I accept this job offer?",
+                tags: ["offer", "job", "accept", "career"],
+                category: "career"),
+])
+
+let advice = SemanticIndex(docs: [
+    SemanticDoc(id: "decision-deadline",
+                text: "Set a day to decide. Indecision leaks time; choose with what you know, then adjust with what you learn.",
+                tags: ["stuck", "delay", "decide"],
+                category: "decision"),
+])
+
+let a = analyzeQuestion("I keep thinking about texting my ex. Should I do it?")
+let bestFrame = frames.search(query: a.cleanedQuery, keywords: a.keywords, category: a.category, topK: 1).first
+let bestAdvice = advice.search(query: a.cleanedQuery, keywords: a.keywords, category: a.category, topK: 2)</code></pre>
+
+    <p>注意这里:</p>
+
+    <ul>
+      <li>没有网络请求</li>
+      <li>没有巨大模型</li>
+      <li>没有任何无法解释的黑箱</li>
+    </ul>
+
+    <p>你仍然可以做出"看起来很聪明"的体验——只要语料精炼,打分朴素,结构认真。</p>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>我踩的坑</h2>
+
+    <ol>
+      <li>
+        <p><strong>提前预热 embedding</strong><br>
+        第一次用 embedding 会很慢因为懒加载。我在卡片动画时就开始加载,这样 app 用起来很流畅。</p>
+        <pre><code>Task.detached(priority: .utility) {
+    _ = SentenceEmbeddingCache.shared.vector(for: "warm up")
+}</code></pre>
+      </li>
+      <li><p><strong>别用 <code>lazy var</code> 如果你要在后台任务里用</strong><br>
+        我遇到了奇怪的崩溃直到搞懂这个。就在 <code>init()</code> 里算好所有东西。</p></li>
+      <li><p><strong>embedding 失败时 app 也要能用</strong><br>
+        有时候它们就是不可用。你的 app 还是要做点有用的事。</p></li>
+      <li><p><strong>搜索质量取决于你写的内容质量</strong><br>
+        语义搜索救不了烂文本。我的内容改了五遍。</p></li>
+      <li><p><strong>内存紧张时要有清缓存出口</strong><br>
+        给缓存加 <code>clearAll()</code>,并在 app 的 memory warning 路径里调用,能快速释放缓存向量。</p></li>
+    </ol>
+  </section>
+
+  <hr>
+
+  <section class="section">
+      <h2>让所有人都能用(无障碍部分)</h2>
+
+    <p>我以为我的 app 看起来很安静很简洁。然后我用 VoiceOver 测了一下,发现基本用不了。</p>
+
+    <p>结果发现:</p>
+
+    <ul>
+      <li>"安静"也可能排除别人</li>
+      <li>"漂亮的动画"可能让有些人恶心</li>
+      <li>"极简 UI"对屏幕阅读器可能毫无意义</li>
+    </ul>
+
+    <p>无障碍不是最后加上去的东西。它是结构。</p>
+
+    <p>我在 Wen Gua 里的做法:</p>
+
+    <ul>
+      <li>一个状态机(同一套逻辑,同一组步骤)</li>
+      <li>两种展示方式:
+        <ul>
+          <li>想要的人有丰富动画</li>
+          <li>VoiceOver/Reduce Motion 友好的版本,保留意义但减少运动</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>在 SwiftUI 里读取无障碍设置</h2>
+
+    <pre><code>import SwiftUI
+
+struct RitualView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+
+    var isA11yMode: Bool { reduceMotion || voiceOverEnabled }
+
+    var body: some View {
+        Text(isA11yMode ? "Accessible path" : "Default path")
+    }
+}</code></pre>
+
+    <p>核心思路:让 UI 自适应,别做两套完全不同的界面。</p>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>一个尊重 Reduce Motion 的动画辅助工具</h2>
+
+    <p>Reduce Motion 不是说"零动画"。是说"避免不必要的运动"。</p>
+
+    <p>轻微的透明度过渡通常没问题。大幅旋转的 3D 效果就不行。</p>
+
+    <pre><code>import SwiftUI
+
+private struct AppAnimationModifier&lt;Value: Equatable&gt;: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let animation: Animation?
+    let reducedAnimation: Animation?
+    let value: Value
+
+    func body(content: Content) -&gt; some View {
+        content.animation(reduceMotion ? reducedAnimation : animation, value: value)
+    }
+}
+
+extension View {
+    func appAnimation&lt;V: Equatable&gt;(
+        _ animation: Animation?,
+        reducedAnimation: Animation? = nil,
+        value: V
+    ) -&gt; some View {
+        modifier(AppAnimationModifier(animation: animation, reducedAnimation: reducedAnimation, value: value))
+    }
+}</code></pre>
+
+    <p>这样用:</p>
+
+    <pre><code>struct RevealExample: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var revealed = false
+
+    var body: some View {
+        Text("The lines are drawn")
+            .opacity(revealed ? 1 : 0)
+            .transition(reduceMotion ? .opacity : .scale.combined(with: .opacity))
+            .appAnimation(.easeInOut(duration: 0.3),
+                          reducedAnimation: .easeInOut(duration: 0.2),
+                          value: revealed)
+            .onAppear {
+                withAnimation {
+                    revealed = true
+                }
+            }
+    }
+}</code></pre>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>把纯装饰层从 VoiceOver 世界里"隐形"</h2>
+
+    <p>光晕、粒子、Canvas 背景、3D 效果——如果它们不承载信息,就应该隐藏:</p>
+
+    <pre><code>Canvas { context, size in
+    // 纯装饰绘制
+}
+.accessibilityHidden(true)</code></pre>
+
+    <p>然后把真正的语义信息用 <code>accessibilityLabel</code> / <code>Hint</code> / <code>combine</code> 的方式交代清楚。</p>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>关键时刻要"说出来"</h2>
+
+    <p>动画会用视觉表达进度。VoiceOver 需要等价的信号。</p>
+
+    <pre><code>import UIKit
+
+enum A11y {
+    static func announce(_ message: String) {
+        DispatchQueue.main.async {
+            UIAccessibility.post(notification: .announcement, argument: message)
+        }
+    }
+}</code></pre>
+
+    <p>在仪式完成的瞬间:</p>
+
+    <pre><code>if voiceOverEnabled {
+    A11y.announce("The lines are drawn")
+}</code></pre>
+
+    <p>句子要短,给听觉留空间。</p>
+  </section>
+
+  <hr>
+
+  <section class="section">
+      <h2>一个可复用模式:一个仪式,两种揭示方式</h2>
+
+    <p>这就是 Wen Gua 在卡牌动画里做的事:</p>
+
+    <ul>
+      <li>Motion 开启时:完整的卡堆动画</li>
+      <li>Reduce Motion 或 VoiceOver 开启时:
+        <ul>
+          <li>仍然推进同样的步骤</li>
+          <li>用 crossfade 显示最终结果</li>
+          <li>发布语音提示</li>
+        </ul>
+      </li>
+    </ul>
+
+    <pre><code>import SwiftUI
+
+struct CardRevealView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+
+    @State private var revealed = false
+    @AccessibilityFocusState private var focusFinalCard: Bool
+
+    var body: some View {
+        ZStack {
+            AnimatedStack()
+                .accessibilityHidden(true)
+                .opacity((reduceMotion || voiceOverEnabled) ? 0 : 1)
+
+            FinalCard()
+                .opacity((reduceMotion || voiceOverEnabled) ? (revealed ? 1 : 0) : 0)
+                .accessibilityLabel("Hexagram card")
+                .accessibilityFocused($focusFinalCard)
+        }
+        .onAppear { run() }
+    }
+
+    private func run() {
+        if reduceMotion || voiceOverEnabled {
+            withAnimation(.easeInOut(duration: 0.22)) {
+                revealed = true
+            }
+            if voiceOverEnabled {
+                focusFinalCard = true
+                A11y.announce("The lines are drawn")
+            }
+        } else {
+            // 默认动画路径…
+        }
+    }
+}
+
+private struct AnimatedStack: View { var body: some View { Color.clear } }
+private struct FinalCard: View { var body: some View { Color.clear } }</code></pre>
+
+    <p>最重要的不是视觉,而是完整性:<br>
+    <strong>同一个故事,用用户能够接收的方式讲出来。</strong></p>
+  </section>
+
+  <hr>
+
+  <section class="section">
+    <h2>诚实地展示它怎么工作的</h2>
+
+    <p>我给 Wen Gua 加了个"工作原理"页面,展示整个流程:解析、嵌入、检索、格式化。</p>
+
+    <p>让用户知道"他们的文字发生了什么",是一种尊重。</p>
+    </section>
+
+    <hr>
+
+    <section class="section">
+      <h2>许可协议</h2>
+      <ul>
+        <li>代码:MIT</li>
+        <li>文档:CC BY 4.0</li>
+      </ul>
+    </section>
+
+    <hr>
+
+    <section class="section">
+      <h2>我为什么在意这个</h2>
+
+    <p>"端侧智能"有时被当作卖点。</p>
+
+    <p>我更愿意把它当作...做人该做的?</p>
+
+    <p>人们在我 app 里打的私人想法不是训练数据。<br>
+    他们的无障碍设置不是麻烦。<br>
+    他们的注意力不是矿产。</p>
+
+    <p>我今年 14 岁,从小就在写代码,但音乐教会了我一些代码教程没教的东西:音符之间的停顿和音符本身一样重要。</p>
+
+    <p>Wen Gua 就是那个停顿。决定前呼吸的地方。一个尊重易经但不搞门槛的仪式。一个提醒——不是所有东西都要在云端。</p>
+
+    <p>我花了好几个月重写这个 app 让它完全无障碍、完全离线,因为我觉得你的疑虑值得隐私,你的决定值得尊严。</p>
+    </section>
+
+      <footer class="footer section">
+        <div class="author-name">Yuze Pan</div>
+        <span class="footer-sep">/</span>
+        <div class="author-name-zh">潘禹泽</div>
+        <a class="github-link" href="https://github.com/yuzeguitarist" target="_blank" rel="noopener">GitHub</a>
+      </footer>
+
+</article>
+
+<script>
+// ── Language Detection & Switching ──
+function detectLang() {
+  const nav = navigator.language || navigator.userLanguage || 'en';
+  return nav.startsWith('zh') ? 'zh' : 'en';
+}
+
+// Cancel any pending language transition
+let _langTimer = null;
+
+function setLang(lang) {
+  const prev = document.documentElement.lang;
+  document.documentElement.lang = lang;
+
+  // Clear any pending transition from rapid switching
+  if (_langTimer) { clearTimeout(_langTimer); _langTimer = null; }
+
+  const allArticles = document.querySelectorAll('[data-lang]');
+  if (prev && prev !== lang) {
+    // Fade out old
+    allArticles.forEach(el => {
+      if (el.dataset.lang === prev) {
+        el.classList.remove('lang-visible');
+      }
+    });
+    // After fade-out, swap display and fade in new
+    _langTimer = setTimeout(() => {
+      _langTimer = null;
+      allArticles.forEach(el => {
+        if (el.dataset.lang === prev) el.classList.remove('lang-active');
+      });
+      allArticles.forEach(el => {
+        if (el.dataset.lang === lang) el.classList.add('lang-active');
+      });
+      // Double rAF ensures browser has painted the display:block frame before fading in
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          allArticles.forEach(el => {
+            if (el.dataset.lang === lang) el.classList.add('lang-visible');
+          });
+        });
+      });
+    }, 400);
+  } else {
+    // First load - no transition
+    allArticles.forEach(el => {
+      if (el.dataset.lang === lang) {
+        el.classList.add('lang-active');
+        el.classList.add('lang-visible');
+      } else {
+        el.classList.remove('lang-active');
+        el.classList.remove('lang-visible');
+      }
+    });
+  }
+
+  // Update sidebar capsule (sliding pill)
+  const sidebarLang = document.getElementById('sidebar-lang');
+  sidebarLang.classList.toggle('lang-zh', lang === 'zh');
+  document.getElementById('side-btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('side-btn-zh').classList.toggle('active', lang === 'zh');
+  // Update mobile FAB
+  document.getElementById('fab-btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('fab-btn-zh').classList.toggle('active', lang === 'zh');
+  // Close FAB menu after selection
+  document.getElementById('lang-fab').classList.remove('open');
+  document.title = lang === 'zh'
+    ? '为什么我不想把日记传到云端'
+    : "Why I didn't want my diary in the cloud";
+  localStorage.setItem('lang', lang);
+  // Rebuild TOC after content is visible
+  const shouldAnimate = prev && prev !== lang;
+  setTimeout(() => buildTOC(shouldAnimate), shouldAnimate ? 420 : 0);
+}
+
+// Manual scroll restoration to avoid layout-shift glitch
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+// Save scroll position before unload
+window.addEventListener('beforeunload', () => {
+  sessionStorage.setItem('_scrollY', String(window.scrollY));
+});
+
+// Init language: saved > browser > default
+document.documentElement.lang = ''; // Reset so first setLang doesn't animate
+const savedLang = localStorage.getItem('lang');
+setLang(savedLang || detectLang());
+
+// Restore scroll position after content is visible
+requestAnimationFrame(() => {
+  const savedY = sessionStorage.getItem('_scrollY');
+  if (savedY) {
+    window.scrollTo(0, parseInt(savedY, 10));
+    sessionStorage.removeItem('_scrollY');
+  }
+});
+
+// Clear any hash on load (prevent jumping to old anchors)
+if (window.location.hash) {
+  history.replaceState(null, '', window.location.pathname + window.location.search);
+}
+
+// ── Mobile TOC ──
+const tocToggle = document.getElementById('toc-toggle');
+const tocOverlay = document.getElementById('toc-overlay');
+const tocPanel = document.getElementById('toc-panel');
+
+function openMobileTOC() {
+  tocOverlay.classList.add('open');
+  tocPanel.classList.add('open');
+  tocToggle.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  document.body.style.touchAction = 'none';
+}
+
+function closeMobileTOC() {
+  tocOverlay.classList.remove('open');
+  tocPanel.classList.remove('open');
+  tocToggle.classList.remove('active');
+  document.body.style.overflow = '';
+  document.body.style.touchAction = '';
+}
+
+tocToggle.addEventListener('click', () => {
+  if (tocPanel.classList.contains('open')) {
+    closeMobileTOC();
+  } else {
+    openMobileTOC();
+  }
+});
+
+tocOverlay.addEventListener('click', closeMobileTOC);
+
+// ── Mobile Language FAB ──
+const langFab = document.getElementById('lang-fab');
+const langFabTrigger = document.getElementById('lang-fab-trigger');
+
+langFabTrigger.addEventListener('click', () => {
+  langFab.classList.toggle('open');
+});
+
+// Close FAB when clicking outside
+document.addEventListener('click', (e) => {
+  if (!langFab.contains(e.target)) {
+    langFab.classList.remove('open');
+  }
+});
+
+// ── Sidebar TOC ──
+let _tocBuildTimer = null;
+function buildTOC(animate) {
+  const lang = document.documentElement.lang;
+  const article = document.querySelector('article[data-lang="' + lang + '"]');
+  const sidebarNav = document.getElementById('sidebar-nav');
+  const panelNav = document.getElementById('toc-panel-nav');
+  if (!article || !sidebarNav || !panelNav) return;
+
+  if (_tocBuildTimer) { clearTimeout(_tocBuildTimer); _tocBuildTimer = null; }
+
+  function rebuild() {
+    sidebarNav.innerHTML = '';
+    panelNav.innerHTML = '';
+  const headings = article.querySelectorAll('h2');
+
+  headings.forEach((h, i) => {
+    const id = 'toc-' + lang + '-' + i;
+    h.id = id;
+
+    // Sidebar link (desktop)
+    const sideLink = document.createElement('a');
+    sideLink.textContent = h.textContent;
+    sideLink.dataset.target = id;
+    sideLink.href = 'javascript:void(0)';
+    sideLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    sidebarNav.appendChild(sideLink);
+
+    // Panel link (mobile)
+    const panelLink = document.createElement('a');
+    panelLink.textContent = h.textContent;
+    panelLink.dataset.target = id;
+    panelLink.href = 'javascript:void(0)';
+    panelLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeMobileTOC();
+      setTimeout(() => {
+        document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    });
+    panelNav.appendChild(panelLink);
+  });
+
+  // Scroll spy
+  if (window._tocObserver) window._tocObserver.disconnect();
+
+  window._tocObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const target = entry.target.id;
+        // Update sidebar
+        sidebarNav.querySelectorAll('a').forEach(a => a.classList.remove('active'));
+        const sideActive = sidebarNav.querySelector('a[data-target="' + target + '"]');
+        if (sideActive) sideActive.classList.add('active');
+        // Update panel
+        panelNav.querySelectorAll('a').forEach(a => a.classList.remove('active'));
+        const panelActive = panelNav.querySelector('a[data-target="' + target + '"]');
+        if (panelActive) panelActive.classList.add('active');
+      }
+    });
+  }, { threshold: 0, rootMargin: '0px 0px -70% 0px' });
+
+    headings.forEach((h) => window._tocObserver.observe(h));
+  }
+
+  // If animate, fade out -> rebuild -> fade in
+  if (animate) {
+    sidebarNav.style.opacity = '0';
+    panelNav.style.opacity = '0';
+    _tocBuildTimer = setTimeout(() => {
+      _tocBuildTimer = null;
+      rebuild();
+      requestAnimationFrame(() => {
+        sidebarNav.style.opacity = '1';
+        panelNav.style.opacity = '1';
+      });
+    }, 300);
+  } else {
+    rebuild();
+    sidebarNav.style.opacity = '1';
+    panelNav.style.opacity = '1';
+  }
+}
+buildTOC(false);
+
+// ── Syntax Highlighting (Swift-oriented) ──
+function highlightSwift(code) {
+  let html = code;
+
+  const placeholders = [];
+  function ph(cls, text) {
+    const idx = placeholders.length;
+    placeholders.push('<span class="token-' + cls + '">' + text + '</span>');
+    return '\x00P' + idx + '\x01';
+  }
+
+  html = html.replace(/(\/\/.*)/g, (m) => ph('comment', m));
+  html = html.replace(/(\/\*[\s\S]*?\*\/)/g, (m) => ph('comment', m));
+  html = html.replace(/("(?:[^"\\]|\\.)*")/g, (m) => ph('string', m));
+  html = html.replace(/@(\w+)/g, (m) => ph('decorator', m));
+  html = html.replace(/\b(\d+\.?\d*)\b/g, (m) => ph('number', m));
+
+  const keywords = [
+    'import','func','let','var','guard','return','if','else','for','in',
+    'while','switch','case','break','continue','struct','class','enum',
+    'protocol','extension','private','public','internal','fileprivate',
+    'open','static','final','override','mutating','throws','throw','try',
+    'catch','do','defer','where','as','is','nil','true','false','self',
+    'Self','init','deinit','typealias','associatedtype','some','any',
+    'async','await','Task','weak','unowned','lazy','convenience',
+    'required','optional','dynamic','prefix','postfix','infix',
+    'subscript','willSet','didSet','get','set','indirect',
+    'nonisolated','isolated','consuming','borrowing','sending'
+  ];
+  const kwPattern = new RegExp('\\b(' + keywords.join('|') + ')\\b', 'g');
+  html = html.replace(kwPattern, (m) => ph('keyword', m));
+
+  const types = [
+    'String','Int','Float','Double','Bool','Array','Dictionary','Set',
+    'Optional','Void','Any','AnyObject','Never','Result','Error',
+    'View','Text','ZStack','VStack','HStack','Color','Image',
+    'Button','Canvas','State','Environment','Binding','ObservableObject',
+    'Published','StateObject','EnvironmentObject','some',
+    'NSCache','NSString','NSObject','NSLock','DispatchQueue',
+    'NLEmbedding','NLTagger','NLLanguage','UIAccessibility',
+    'Animation','ViewModifier','Content','Equatable','Hashable',
+    'Sendable','CachePolicy','Entry','Analysis','SemanticDoc',
+    'SemanticIndex','SentenceEmbeddingCache','VectorMath',
+    'EmbeddingBox','A11y','AccessibilityFocusState',
+    'AppAnimationModifier','RitualView','RevealExample',
+    'CardRevealView','AnimatedStack','FinalCard'
+  ];
+  const typePattern = new RegExp('\\b(' + types.join('|') + ')\\b', 'g');
+  html = html.replace(typePattern, (m) => ph('type', m));
+
+  html = html.replace(/\b([a-z]\w*)\s*(?=\()/g, (m, name) => ph('func', name));
+  html = html.replace(/\.([a-zA-Z]\w*)/g, (m, name) => '.' + ph('property', name));
+
+  html = html.replace(/\x00P(\d+)\x01/g, (_, idx) => placeholders[idx]);
+  return html;
+}
+
+// ── Wrap all <pre> with copy button + apply highlighting ──
+document.querySelectorAll('pre').forEach((pre) => {
+  const codeEl = pre.querySelector('code');
+  if (!codeEl) return;
+
+  const rawText = codeEl.textContent;
+  codeEl.innerHTML = highlightSwift(codeEl.innerHTML);
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'code-block';
+  pre.parentNode.insertBefore(wrapper, pre);
+  wrapper.appendChild(pre);
+
+  const btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.setAttribute('aria-label', 'Copy code');
+  btn.innerHTML = `
+    <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+    </svg>
+    <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>`;
+
+  btn.addEventListener('click', () => {
+    navigator.clipboard.writeText(rawText).then(() => {
+      btn.classList.add('copied');
+      setTimeout(() => btn.classList.remove('copied'), 1500);
+    });
+  });
+
+  wrapper.appendChild(btn);
+});
+
+// ── Scroll Reveal ──
+const observer = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  },
+  { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+);
+
+document.querySelectorAll('.section').forEach((el) => observer.observe(el));
+
+// ── Image Lightbox ──
+(function() {
+  const lightbox = document.createElement('div');
+  lightbox.className = 'lightbox';
+  lightbox.innerHTML = `
+    <img id="lightbox-img" src="" alt="">
+    <div class="lightbox-toolbar">
+      <button class="lightbox-btn" id="lightbox-download">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Download
+      </button>
+      <button class="lightbox-btn" id="lightbox-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+        Close
+      </button>
+    </div>`;
+  document.body.appendChild(lightbox);
+
+  const lbImg = document.getElementById('lightbox-img');
+  const lbDownload = document.getElementById('lightbox-download');
+  const lbClose = document.getElementById('lightbox-close');
+  let currentSrc = '';
+
+  function openLightbox(src, alt) {
+    lbImg.src = src;
+    lbImg.alt = alt || '';
+    currentSrc = src;
+    lightbox.style.display = 'flex';
+    requestAnimationFrame(() => { lightbox.classList.add('open'); });
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove('open');
+    setTimeout(() => { lightbox.style.display = 'none'; }, 250);
+    document.body.style.overflow = '';
+  }
+
+  // Real download via fetch + blob
+  lbDownload.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    try {
+      const resp = await fetch(currentSrc);
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = currentSrc.split('/').pop() || 'image.svg';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      // Fallback: open in new tab
+      window.open(currentSrc, '_blank');
+    }
+  });
+
+  document.querySelectorAll('.diagrams img').forEach(img => {
+    img.addEventListener('click', () => openLightbox(img.src, img.alt));
+  });
+
+  lbClose.addEventListener('click', (e) => { e.stopPropagation(); closeLightbox(); });
+  lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox) closeLightbox();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox();
+  });
+})();
+</script>
+
+</body>
+</html>

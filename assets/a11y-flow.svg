@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="320" viewBox="0 0 1200 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Accessibility flow for VoiceOver and Reduce Motion">
+  <defs>
+    <style>
+      .box { fill: #ffffff; stroke: #111111; stroke-width: 2; rx: 14; }
+      .text { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif; fill: #111111; }
+      .title { font-size: 18px; font-weight: 600; }
+      .sub { font-size: 13px; font-weight: 400; opacity: 0.85; }
+      .hint { font-size: 12px; opacity: 0.7; }
+      .arrow { stroke: #111111; stroke-width: 2; fill: none; marker-end: url(#arrowHead); }
+    </style>
+    <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 z" fill="#111111"/>
+    </marker>
+  </defs>
+
+  <text class="text hint" x="600" y="34" text-anchor="middle">Same state machine. Two presentations. Respect the user's settings.</text>
+
+  <rect class="box" x="490" y="55" width="220" height="80"/>
+  <text class="text title" x="600" y="92" text-anchor="middle">Ritual View</text>
+  <text class="text sub" x="600" y="115" text-anchor="middle">Card reveal + progress</text>
+
+  <rect class="box" x="170" y="190" width="330" height="95"/>
+  <text class="text title" x="335" y="228" text-anchor="middle">Motion On</text>
+  <text class="text sub" x="335" y="252" text-anchor="middle">3D stack · Canvas · haptics</text>
+  <text class="text hint" x="335" y="272" text-anchor="middle">Decorative views hidden from VoiceOver</text>
+
+  <rect class="box" x="700" y="190" width="330" height="95"/>
+  <text class="text title" x="865" y="228" text-anchor="middle">VoiceOver / Reduce Motion</text>
+  <text class="text sub" x="865" y="252" text-anchor="middle">Crossfade · static alternatives</text>
+  <text class="text hint" x="865" y="272" text-anchor="middle">Announcements · focus · simple transitions</text>
+
+  <path class="arrow" d="M600 135 L390 190"/>
+  <path class="arrow" d="M600 135 L810 190"/>
+
+  <text class="text hint" x="335" y="176" text-anchor="middle">Default experience</text>
+  <text class="text hint" x="865" y="176" text-anchor="middle">Accessibility-adaptive path</text>
+</svg>
