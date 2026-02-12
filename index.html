@@ -2862,6 +2862,15 @@ function setMobileControlsHidden(hidden) {
 }
 
 function onMobileScrolling() {
+  if (tocPanel.classList.contains('open')) {
+    if (mobileControlsRevealTimer) {
+      clearTimeout(mobileControlsRevealTimer);
+      mobileControlsRevealTimer = null;
+    }
+    setMobileControlsHidden(false);
+    return;
+  }
+
   const now = Date.now();
   if (now - mobileControlsLastHideAt >= MOBILE_CONTROLS_SCROLL_THROTTLE_MS) {
     setMobileControlsHidden(true);
