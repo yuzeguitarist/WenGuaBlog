@@ -3164,7 +3164,7 @@ if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
   });
 
   document.querySelectorAll('.diagrams img').forEach(img => {
-    img.addEventListener('click', () => openLightbox(img.src, img.alt));
+    img.addEventListener('click', () => openLightbox(img.currentSrc || img.src, img.alt));
   });
 
   lbClose.addEventListener('click', (e) => { e.stopPropagation(); closeLightbox(); });
