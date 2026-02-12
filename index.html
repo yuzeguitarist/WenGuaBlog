@@ -104,7 +104,7 @@ body {
   -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 2px 12px rgba(0,0,0,0.08);
   overflow: hidden;
-  transition: height 0.3s cubic-bezier(0.32, 0.72, 0, 1), border-radius 0.3s ease;
+  transition: height 0.3s cubic-bezier(0.32, 0.72, 0, 1), border-radius 0.3s ease, opacity 0.35s ease, transform 0.35s ease;
   flex-direction: column;
   align-items: center;
   height: 44px;
@@ -250,7 +250,7 @@ body {
   align-items: center;
   justify-content: center;
   color: var(--fg-secondary);
-  transition: color 0.2s, box-shadow 0.2s;
+  transition: color 0.2s, box-shadow 0.2s, opacity 0.35s ease, transform 0.35s ease;
   box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 
@@ -368,6 +368,20 @@ body {
   }
   .toc-panel {
     display: block;
+  }
+
+  body.mobile-controls-hidden .lang-fab,
+  body.mobile-controls-hidden .toc-toggle {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  body.mobile-controls-hidden .lang-fab {
+    transform: translateY(-10px);
+  }
+
+  body.mobile-controls-hidden .toc-toggle {
+    transform: translateY(10px);
   }
 }
 
@@ -2511,6 +2525,34 @@ document.addEventListener('click', (e) => {
     langFab.classList.remove('open');
   }
 });
+
+// Hide mobile floating controls while scrolling, then fade them back in after scroll stops.
+const mobileControlsMedia = window.matchMedia('(max-width: 1099px)');
+let mobileControlsRevealTimer = null;
+
+function setMobileControlsHidden(hidden) {
+  if (!mobileControlsMedia.matches) {
+    document.body.classList.remove('mobile-controls-hidden');
+    return;
+  }
+  document.body.classList.toggle('mobile-controls-hidden', hidden);
+}
+
+function onMobileScrolling() {
+  setMobileControlsHidden(true);
+  if (mobileControlsRevealTimer) clearTimeout(mobileControlsRevealTimer);
+  mobileControlsRevealTimer = setTimeout(() => {
+    setMobileControlsHidden(false);
+  }, 180);
+}
+
+window.addEventListener('scroll', onMobileScrolling, { passive: true });
+window.addEventListener('touchmove', onMobileScrolling, { passive: true });
+if (mobileControlsMedia.addEventListener) {
+  mobileControlsMedia.addEventListener('change', () => setMobileControlsHidden(false));
+} else {
+  mobileControlsMedia.addListener(() => setMobileControlsHidden(false));
+}
 
 // ── Sidebar TOC ──
 let _tocBuildTimer = null;
