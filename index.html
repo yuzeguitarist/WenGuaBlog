@@ -5,6 +5,43 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Why I didn't want my diary in the cloud</title>
 <meta name="description" content="Notes on offline semantic search + SwiftUI accessibility. On-device intelligence for Wen Gua.">
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+<meta name="author" content="Yuze Pan">
+<meta name="theme-color" content="#ffffff">
+<link rel="canonical" href="./">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Wen Gua Blog">
+<meta property="og:title" content="Why I did not want my diary in the cloud">
+<meta property="og:description" content="Notes on offline semantic search and SwiftUI accessibility. On-device intelligence for Wen Gua.">
+<meta property="og:image" content="assets/pipeline.svg">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="zh_CN">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Why I did not want my diary in the cloud">
+<meta name="twitter:description" content="Notes on offline semantic search and SwiftUI accessibility. On-device intelligence for Wen Gua.">
+<script type="application/ld+json" id="structured-data-article">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Why I did not want my diary in the cloud",
+  "description": "Notes on offline semantic search and SwiftUI accessibility. On-device intelligence for Wen Gua.",
+  "inLanguage": ["en", "zh-CN"],
+  "author": {
+    "@type": "Person",
+    "name": "Yuze Pan"
+  },
+  "publisher": {
+    "@type": "Person",
+    "name": "Yuze Pan"
+  },
+  "about": [
+    "Offline semantic search",
+    "SwiftUI accessibility",
+    "On-device intelligence",
+    "Privacy"
+  ]
+}
+</script>
 <style>
 /* ── Reset & Base ── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -53,6 +90,36 @@ a:focus-visible,
 button:focus-visible {
   outline: 2px solid rgba(29, 29, 31, 0.35);
   outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: fixed;
+  top: -3rem;
+  left: 1rem;
+  z-index: 500;
+  background: #1d1d1f;
+  color: #fff;
+  text-decoration: none;
+  padding: 0.45rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus-visible {
+  top: 1rem;
 }
 
 /* ── Language Toggle: Desktop (in sidebar) ── */
@@ -858,12 +925,40 @@ hr {
   .section { opacity: 1; transform: none; }
   .article { margin-left: auto; }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .section,
+  [data-lang="en"], [data-lang="zh"],
+  .toc-panel,
+  .toc-overlay,
+  .lang-fab,
+  .lang-fab-menu,
+  .lang-fab-trigger svg,
+  .toc-toggle,
+  .toc-toggle .toc-icon-list,
+  .toc-toggle .toc-icon-close,
+  .sidebar-lang-pill,
+  .copy-btn svg,
+  .lightbox {
+    transition: none !important;
+  }
+  .section {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
 </style>
 </head>
 <body>
 
+<a class="skip-link" href="#main-content">Skip to content / 跳到正文</a>
+<div id="a11y-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
 <!-- Mobile TOC -->
-<button class="toc-toggle" id="toc-toggle" aria-label="Table of contents">
+<button type="button" class="toc-toggle" id="toc-toggle" aria-label="Table of contents" aria-controls="toc-panel" aria-expanded="false">
   <svg class="toc-icon-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <line x1="3" y1="6" x2="21" y2="6"></line>
     <line x1="3" y1="12" x2="15" y2="12"></line>
@@ -874,39 +969,41 @@ hr {
     <line x1="6" y1="6" x2="18" y2="18"></line>
   </svg>
 </button>
-<div class="toc-overlay" id="toc-overlay"></div>
-<div class="toc-panel" id="toc-panel">
+<div class="toc-overlay" id="toc-overlay" aria-hidden="true"></div>
+<div class="toc-panel" id="toc-panel" role="dialog" aria-modal="true" aria-label="Table of contents" aria-hidden="true">
   <div class="toc-panel-handle"></div>
-  <nav class="toc-panel-inner" id="toc-panel-nav"></nav>
+  <nav class="toc-panel-inner" id="toc-panel-nav" aria-label="Table of contents"></nav>
 </div>
 
 <!-- Sidebar TOC -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-lang" id="sidebar-lang">
     <div class="sidebar-lang-pill"></div>
-    <button id="side-btn-en" onclick="setLang('en')">EN</button>
-    <button id="side-btn-zh" onclick="setLang('zh')">中</button>
+    <button type="button" id="side-btn-en" onclick="setLang('en')" aria-pressed="true">EN</button>
+    <button type="button" id="side-btn-zh" onclick="setLang('zh')" aria-pressed="false">中</button>
   </div>
-  <nav class="sidebar-inner" id="sidebar-nav"></nav>
+  <nav class="sidebar-inner" id="sidebar-nav" aria-label="Table of contents"></nav>
 </aside>
 
 <!-- Mobile Language FAB -->
 <div class="lang-fab" id="lang-fab">
-  <button class="lang-fab-trigger" id="lang-fab-trigger" aria-label="Switch language">
+  <button type="button" class="lang-fab-trigger" id="lang-fab-trigger" aria-label="Switch language" aria-haspopup="true" aria-controls="lang-fab-menu" aria-expanded="false">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="10"></circle>
       <ellipse cx="12" cy="12" rx="4" ry="10"></ellipse>
       <line x1="2" y1="12" x2="22" y2="12"></line>
     </svg>
   </button>
-  <div class="lang-fab-menu" id="lang-fab-menu">
-    <button id="fab-btn-en" onclick="setLang('en')">EN</button>
-    <button id="fab-btn-zh" onclick="setLang('zh')">中</button>
+  <div class="lang-fab-menu" id="lang-fab-menu" role="group" aria-label="Language options">
+    <button type="button" id="fab-btn-en" onclick="setLang('en')" aria-pressed="true">EN</button>
+    <button type="button" id="fab-btn-zh" onclick="setLang('zh')" aria-pressed="false">中</button>
   </div>
 </div>
 
+<main id="main-content" role="main">
+
 <!-- ═══════════════════ ENGLISH ═══════════════════ -->
-<article class="article" data-lang="en">
+<article class="article lang-active lang-visible" data-lang="en" id="article-en" lang="en" aria-hidden="false">
 
   <header class="hero section">
     <h1>Why I didn't want my diary in the cloud</h1>
@@ -1652,7 +1749,7 @@ private struct FinalCard: View { var body: some View { Color.clear } }</code></p
 </article>
 
 <!-- ═══════════════════ CHINESE ═══════════════════ -->
-<article class="article" data-lang="zh">
+<article class="article" data-lang="zh" id="article-zh" lang="zh-CN" hidden aria-hidden="true">
 
   <header class="hero section">
     <h1>为什么我不想把日记传到云端</h1>
@@ -2397,6 +2494,8 @@ private struct FinalCard: View { var body: some View { Color.clear } }</code></p
 
 </article>
 
+</main>
+
 <script>
 // ── Language Detection & Switching ──
 function detectLang() {
@@ -2406,6 +2505,75 @@ function detectLang() {
 
 // Cancel any pending language transition
 let _langTimer = null;
+const statusRegion = document.getElementById('a11y-status');
+const metaDescriptionEl = document.querySelector('meta[name="description"]');
+const ogTitleEl = document.querySelector('meta[property="og:title"]');
+const ogDescriptionEl = document.querySelector('meta[property="og:description"]');
+const ogLocaleEl = document.querySelector('meta[property="og:locale"]');
+const twitterTitleEl = document.querySelector('meta[name="twitter:title"]');
+const twitterDescriptionEl = document.querySelector('meta[name="twitter:description"]');
+const canonicalEl = document.querySelector('link[rel="canonical"]');
+
+if (canonicalEl) canonicalEl.href = window.location.href.split('#')[0];
+
+function announceStatus(message) {
+  if (!statusRegion) return;
+  statusRegion.textContent = '';
+  requestAnimationFrame(() => { statusRegion.textContent = message; });
+}
+
+function updateCopyButtonsA11y(lang) {
+  const copyLabel = lang === 'zh' ? '复制代码' : 'Copy code';
+  document.querySelectorAll('.copy-btn').forEach((btn) => {
+    btn.setAttribute('aria-label', copyLabel);
+  });
+}
+
+function updateSeoMeta(lang) {
+  const isZh = lang === 'zh';
+  const nextTitle = isZh ? '为什么我不想把日记传到云端' : "Why I didn't want my diary in the cloud";
+  const nextDescription = isZh
+    ? '离线语义搜索 + SwiftUI 无障碍笔记。Wen Gua 的端侧智能实践。'
+    : 'Notes on offline semantic search + SwiftUI accessibility. On-device intelligence for Wen Gua.';
+
+  document.title = nextTitle;
+  if (metaDescriptionEl) metaDescriptionEl.setAttribute('content', nextDescription);
+  if (ogTitleEl) ogTitleEl.setAttribute('content', nextTitle);
+  if (ogDescriptionEl) ogDescriptionEl.setAttribute('content', nextDescription);
+  if (ogLocaleEl) ogLocaleEl.setAttribute('content', isZh ? 'zh_CN' : 'en_US');
+  if (twitterTitleEl) twitterTitleEl.setAttribute('content', nextTitle);
+  if (twitterDescriptionEl) twitterDescriptionEl.setAttribute('content', nextDescription);
+}
+
+function updateLanguageUiA11y(lang) {
+  const isZh = lang === 'zh';
+  const sideBtnEn = document.getElementById('side-btn-en');
+  const sideBtnZh = document.getElementById('side-btn-zh');
+  const fabBtnEn = document.getElementById('fab-btn-en');
+  const fabBtnZh = document.getElementById('fab-btn-zh');
+  const tocToggleEl = document.getElementById('toc-toggle');
+  const tocPanelEl = document.getElementById('toc-panel');
+  const sidebarNavEl = document.getElementById('sidebar-nav');
+  const panelNavEl = document.getElementById('toc-panel-nav');
+  const langFabTriggerEl = document.getElementById('lang-fab-trigger');
+  const lightboxDownloadEl = document.getElementById('lightbox-download');
+  const lightboxCloseEl = document.getElementById('lightbox-close');
+
+  if (sideBtnEn) sideBtnEn.setAttribute('aria-pressed', isZh ? 'false' : 'true');
+  if (sideBtnZh) sideBtnZh.setAttribute('aria-pressed', isZh ? 'true' : 'false');
+  if (fabBtnEn) fabBtnEn.setAttribute('aria-pressed', isZh ? 'false' : 'true');
+  if (fabBtnZh) fabBtnZh.setAttribute('aria-pressed', isZh ? 'true' : 'false');
+
+  const tocLabel = isZh ? '目录' : 'Table of contents';
+  if (tocToggleEl) tocToggleEl.setAttribute('aria-label', tocLabel);
+  if (tocPanelEl) tocPanelEl.setAttribute('aria-label', tocLabel);
+  if (sidebarNavEl) sidebarNavEl.setAttribute('aria-label', tocLabel);
+  if (panelNavEl) panelNavEl.setAttribute('aria-label', tocLabel);
+  if (langFabTriggerEl) langFabTriggerEl.setAttribute('aria-label', isZh ? '切换语言' : 'Switch language');
+
+  if (lightboxDownloadEl) lightboxDownloadEl.setAttribute('aria-label', isZh ? '下载图片' : 'Download image');
+  if (lightboxCloseEl) lightboxCloseEl.setAttribute('aria-label', isZh ? '关闭预览' : 'Close preview');
+}
 
 function setLang(lang) {
   const prev = document.documentElement.lang;
@@ -2426,10 +2594,18 @@ function setLang(lang) {
     _langTimer = setTimeout(() => {
       _langTimer = null;
       allArticles.forEach(el => {
-        if (el.dataset.lang === prev) el.classList.remove('lang-active');
+        if (el.dataset.lang === prev) {
+          el.classList.remove('lang-active');
+          el.hidden = true;
+          el.setAttribute('aria-hidden', 'true');
+        }
       });
       allArticles.forEach(el => {
-        if (el.dataset.lang === lang) el.classList.add('lang-active');
+        if (el.dataset.lang === lang) {
+          el.hidden = false;
+          el.setAttribute('aria-hidden', 'false');
+          el.classList.add('lang-active');
+        }
       });
       // Double rAF ensures browser has painted the display:block frame before fading in
       requestAnimationFrame(() => {
@@ -2444,9 +2620,13 @@ function setLang(lang) {
     // First load - no transition
     allArticles.forEach(el => {
       if (el.dataset.lang === lang) {
+        el.hidden = false;
+        el.setAttribute('aria-hidden', 'false');
         el.classList.add('lang-active');
         el.classList.add('lang-visible');
       } else {
+        el.hidden = true;
+        el.setAttribute('aria-hidden', 'true');
         el.classList.remove('lang-active');
         el.classList.remove('lang-visible');
       }
@@ -2463,9 +2643,13 @@ function setLang(lang) {
   document.getElementById('fab-btn-zh').classList.toggle('active', lang === 'zh');
   // Close FAB menu after selection
   document.getElementById('lang-fab').classList.remove('open');
-  document.title = lang === 'zh'
-    ? '为什么我不想把日记传到云端'
-    : "Why I didn't want my diary in the cloud";
+  document.getElementById('lang-fab-trigger').setAttribute('aria-expanded', 'false');
+  updateSeoMeta(lang);
+  updateLanguageUiA11y(lang);
+  updateCopyButtonsA11y(lang);
+  if (prev && prev !== lang) {
+    announceStatus(lang === 'zh' ? '已切换到中文内容' : 'Switched to English content');
+  }
   localStorage.setItem('lang', lang);
   // Rebuild TOC after content is visible
   const shouldAnimate = prev && prev !== lang;
@@ -2488,9 +2672,10 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // Init language: saved > browser > default
-document.documentElement.lang = ''; // Reset so first setLang doesn't animate
 const savedLang = localStorage.getItem('lang');
-setLang(savedLang || detectLang());
+const initialLang = savedLang || detectLang();
+document.documentElement.lang = initialLang;
+setLang(initialLang);
 
 // Restore scroll position after content is visible
 function restoreScrollPosition() {
@@ -2532,6 +2717,9 @@ function openMobileTOC() {
   tocOverlay.classList.add('open');
   tocPanel.classList.add('open');
   tocToggle.classList.add('active');
+  tocOverlay.setAttribute('aria-hidden', 'false');
+  tocPanel.setAttribute('aria-hidden', 'false');
+  tocToggle.setAttribute('aria-expanded', 'true');
   document.body.style.overflow = 'hidden';
 }
 
@@ -2539,6 +2727,9 @@ function closeMobileTOC() {
   tocOverlay.classList.remove('open');
   tocPanel.classList.remove('open');
   tocToggle.classList.remove('active');
+  tocOverlay.setAttribute('aria-hidden', 'true');
+  tocPanel.setAttribute('aria-hidden', 'true');
+  tocToggle.setAttribute('aria-expanded', 'false');
   document.body.style.overflow = '';
 }
 
@@ -2557,14 +2748,20 @@ const langFab = document.getElementById('lang-fab');
 const langFabTrigger = document.getElementById('lang-fab-trigger');
 
 langFabTrigger.addEventListener('click', () => {
-  langFab.classList.toggle('open');
+  const isOpen = langFab.classList.toggle('open');
+  langFabTrigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
 });
 
 // Close FAB when clicking outside
 document.addEventListener('click', (e) => {
   if (!langFab.contains(e.target)) {
     langFab.classList.remove('open');
+    langFabTrigger.setAttribute('aria-expanded', 'false');
   }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && tocPanel.classList.contains('open')) closeMobileTOC();
 });
 
 // Hide mobile floating controls while scrolling, then fade them back in after scroll stops.
@@ -2775,8 +2972,9 @@ document.querySelectorAll('pre').forEach((pre) => {
   wrapper.appendChild(pre);
 
   const btn = document.createElement('button');
+  btn.type = 'button';
   btn.className = 'copy-btn';
-  btn.setAttribute('aria-label', 'Copy code');
+  btn.setAttribute('aria-label', document.documentElement.lang === 'zh' ? '复制代码' : 'Copy code');
   btn.innerHTML = `
     <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -2790,6 +2988,9 @@ document.querySelectorAll('pre').forEach((pre) => {
     navigator.clipboard.writeText(rawText).then(() => {
       btn.classList.add('copied');
       setTimeout(() => btn.classList.remove('copied'), 1500);
+      announceStatus(document.documentElement.lang === 'zh' ? '代码已复制' : 'Code copied');
+    }).catch(() => {
+      announceStatus(document.documentElement.lang === 'zh' ? '复制失败，请手动复制' : 'Copy failed, please copy manually');
     });
   });
 
@@ -2797,19 +2998,22 @@ document.querySelectorAll('pre').forEach((pre) => {
 });
 
 // ── Scroll Reveal ──
-const observer = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        observer.unobserve(entry.target);
-      }
-    });
-  },
-  { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
-);
-
-document.querySelectorAll('.section').forEach((el) => observer.observe(el));
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  document.querySelectorAll('.section').forEach((el) => el.classList.add('visible'));
+} else {
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+  );
+  document.querySelectorAll('.section').forEach((el) => observer.observe(el));
+}
 
 // ── Image Lightbox ──
 (function() {
@@ -2818,7 +3022,7 @@ document.querySelectorAll('.section').forEach((el) => observer.observe(el));
   lightbox.innerHTML = `
     <img id="lightbox-img" src="" alt="">
     <div class="lightbox-toolbar">
-      <button class="lightbox-btn" id="lightbox-download">
+      <button type="button" class="lightbox-btn" id="lightbox-download">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
           <polyline points="7 10 12 15 17 10"></polyline>
@@ -2826,7 +3030,7 @@ document.querySelectorAll('.section').forEach((el) => observer.observe(el));
         </svg>
         Download
       </button>
-      <button class="lightbox-btn" id="lightbox-close">
+      <button type="button" class="lightbox-btn" id="lightbox-close">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -2840,6 +3044,7 @@ document.querySelectorAll('.section').forEach((el) => observer.observe(el));
   const lbDownload = document.getElementById('lightbox-download');
   const lbClose = document.getElementById('lightbox-close');
   let currentSrc = '';
+  updateLanguageUiA11y(document.documentElement.lang);
 
   function openLightbox(src, alt) {
     lbImg.src = src;
