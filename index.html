@@ -8,9 +8,10 @@
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
 <meta name="author" content="Yuze Pan">
 <meta name="theme-color" content="#ffffff">
-<link rel="canonical" href="./">
+<link rel="canonical" href="https://yuzeguitarist.github.io/WenGuaBlog/">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Wen Gua Blog">
+<meta property="og:url" content="https://yuzeguitarist.github.io/WenGuaBlog/">
 <meta property="og:title" content="Why I did not want my diary in the cloud">
 <meta property="og:description" content="Notes on offline semantic search and SwiftUI accessibility. On-device intelligence for Wen Gua.">
 <meta property="og:image" content="assets/pipeline.svg">
@@ -25,6 +26,8 @@
   "@type": "Article",
   "headline": "Why I did not want my diary in the cloud",
   "description": "Notes on offline semantic search and SwiftUI accessibility. On-device intelligence for Wen Gua.",
+  "url": "https://yuzeguitarist.github.io/WenGuaBlog/",
+  "mainEntityOfPage": "https://yuzeguitarist.github.io/WenGuaBlog/",
   "inLanguage": ["en", "zh-CN"],
   "author": {
     "@type": "Person",
@@ -2512,9 +2515,6 @@ const ogDescriptionEl = document.querySelector('meta[property="og:description"]'
 const ogLocaleEl = document.querySelector('meta[property="og:locale"]');
 const twitterTitleEl = document.querySelector('meta[name="twitter:title"]');
 const twitterDescriptionEl = document.querySelector('meta[name="twitter:description"]');
-const canonicalEl = document.querySelector('link[rel="canonical"]');
-
-if (canonicalEl) canonicalEl.href = window.location.href.split('#')[0];
 
 function announceStatus(message) {
   if (!statusRegion) return;

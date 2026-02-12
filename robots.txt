@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://yuzeguitarist.github.io/WenGuaBlog/sitemap.xml
