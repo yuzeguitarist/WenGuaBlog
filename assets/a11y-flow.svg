@@ -2,15 +2,34 @@
 <svg width="1200" height="320" viewBox="0 0 1200 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Accessibility flow for VoiceOver and Reduce Motion">
   <defs>
     <style>
-      .box { fill: #ffffff; stroke: #111111; stroke-width: 2; rx: 14; }
-      .text { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif; fill: #111111; }
+      :root {
+        --box-fill: #ffffff;
+        --line-color: #111111;
+        --text-main: #111111;
+        --text-sub: rgba(17, 17, 17, 0.85);
+        --text-hint: rgba(17, 17, 17, 0.70);
+      }
+
+      .box { fill: var(--box-fill); stroke: var(--line-color); stroke-width: 2; rx: 14; }
+      .text { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif; fill: var(--text-main); }
       .title { font-size: 18px; font-weight: 600; }
-      .sub { font-size: 13px; font-weight: 400; opacity: 0.85; }
-      .hint { font-size: 12px; opacity: 0.7; }
-      .arrow { stroke: #111111; stroke-width: 2; fill: none; marker-end: url(#arrowHead); }
+      .sub { font-size: 13px; font-weight: 400; fill: var(--text-sub); }
+      .hint { font-size: 12px; fill: var(--text-hint); }
+      .arrow { stroke: var(--line-color); stroke-width: 2; fill: none; marker-end: url(#arrowHead); }
+      .arrow-head { fill: var(--line-color); }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --box-fill: #151515;
+          --line-color: #f3f3f3;
+          --text-main: #f3f3f3;
+          --text-sub: rgba(243, 243, 243, 0.88);
+          --text-hint: rgba(243, 243, 243, 0.72);
+        }
+      }
     </style>
     <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L9,3 L0,6 z" fill="#111111"/>
+      <path class="arrow-head" d="M0,0 L9,3 L0,6 z"/>
     </marker>
   </defs>
 
