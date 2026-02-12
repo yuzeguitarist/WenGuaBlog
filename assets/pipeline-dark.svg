@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1240" height="260" viewBox="0 0 1240 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="On-device semantic retrieval pipeline (dark)">
+  <defs>
+    <style>
+      .box { fill: #151515; stroke: #f3f3f3; stroke-width: 2; rx: 14; }
+      .small { fill: #151515; stroke: #f3f3f3; stroke-width: 2; rx: 12; }
+      .text { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif; fill: #f3f3f3; }
+      .title { font-size: 18px; font-weight: 600; }
+      .sub { font-size: 13px; font-weight: 400; fill: rgba(243, 243, 243, 0.88); }
+      .arrow { stroke: #f3f3f3; stroke-width: 2; fill: none; marker-end: url(#arrowHead); }
+      .arrow-head { fill: #f3f3f3; }
+      .hint { font-size: 12px; fill: rgba(243, 243, 243, 0.72); }
+    </style>
+    <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path class="arrow-head" d="M0,0 L9,3 L0,6 z"/>
+    </marker>
+  </defs>
+
+  <rect class="box" x="30"  y="70" width="150" height="80"/>
+  <rect class="box" x="205" y="70" width="150" height="80"/>
+  <rect class="box" x="380" y="70" width="150" height="80"/>
+  <rect class="box" x="555" y="70" width="150" height="80"/>
+  <rect class="box" x="730" y="70" width="150" height="80"/>
+  <rect class="box" x="905" y="70" width="150" height="80"/>
+  <rect class="box" x="1080" y="70" width="150" height="80"/>
+
+  <text class="text title" x="105" y="104" text-anchor="middle">Question</text>
+  <text class="text sub"   x="105" y="126" text-anchor="middle">User text</text>
+
+  <text class="text title" x="280" y="104" text-anchor="middle">Parse</text>
+  <text class="text sub"   x="280" y="126" text-anchor="middle">Clean + extract</text>
+
+  <text class="text title" x="455" y="104" text-anchor="middle">Sense</text>
+  <text class="text sub"   x="455" y="126" text-anchor="middle">Tone + intent</text>
+
+  <text class="text title" x="630" y="104" text-anchor="middle">Embed</text>
+  <text class="text sub"   x="630" y="126" text-anchor="middle">Vectorize</text>
+
+  <text class="text title" x="805" y="104" text-anchor="middle">Retrieve</text>
+  <text class="text sub"   x="805" y="126" text-anchor="middle">Rank snippets</text>
+
+  <text class="text title" x="980" y="104" text-anchor="middle">Compose</text>
+  <text class="text sub"   x="980" y="126" text-anchor="middle">Structured draft</text>
+
+  <text class="text title" x="1155" y="104" text-anchor="middle">Format</text>
+  <text class="text sub"   x="1155" y="126" text-anchor="middle">Readable sections</text>
+
+  <path class="arrow" d="M180 110 L205 110"/>
+  <path class="arrow" d="M355 110 L380 110"/>
+  <path class="arrow" d="M530 110 L555 110"/>
+  <path class="arrow" d="M705 110 L730 110"/>
+  <path class="arrow" d="M880 110 L905 110"/>
+  <path class="arrow" d="M1055 110 L1080 110"/>
+
+  <rect class="small" x="700" y="175" width="130" height="55"/>
+  <rect class="small" x="845" y="175" width="130" height="55"/>
+  <rect class="small" x="990" y="175" width="130" height="55"/>
+
+  <text class="text sub" x="765" y="205" text-anchor="middle">Frames</text>
+  <text class="text hint" x="765" y="222" text-anchor="middle">Exemplars</text>
+
+  <text class="text sub" x="910" y="205" text-anchor="middle">Advice</text>
+  <text class="text hint" x="910" y="222" text-anchor="middle">Snippets</text>
+
+  <text class="text sub" x="1055" y="205" text-anchor="middle">Library</text>
+  <text class="text hint" x="1055" y="222" text-anchor="middle">Knowledge</text>
+
+  <path class="arrow" d="M765 175 L790 150"/>
+  <path class="arrow" d="M910 175 L820 150"/>
+  <path class="arrow" d="M1055 175 L850 150"/>
+
+  <text class="text hint" x="600" y="40" text-anchor="middle">All on-device · No network · Small, curated corpora</text>
+</svg>
