@@ -3,41 +3,71 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Why I didn't want my diary in the cloud</title>
+<title>Why I didn't want my diary in the cloud | Wen Gua Blog</title>
 <meta name="description" content="Notes on offline semantic search + SwiftUI accessibility. On-device intelligence for Wen Gua.">
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
 <meta name="author" content="Yuze Pan">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f1115">
 <link rel="canonical" href="https://yuzeguitarist.github.io/WenGuaBlog/">
+<link rel="alternate" hreflang="en" href="https://yuzeguitarist.github.io/WenGuaBlog/">
+<link rel="alternate" hreflang="zh-CN" href="https://yuzeguitarist.github.io/WenGuaBlog/">
+<link rel="alternate" hreflang="x-default" href="https://yuzeguitarist.github.io/WenGuaBlog/">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Wen Gua Blog">
 <meta property="og:url" content="https://yuzeguitarist.github.io/WenGuaBlog/">
-<meta property="og:title" content="Why I did not want my diary in the cloud">
+<meta property="og:title" content="Why I didn't want my diary in the cloud | Wen Gua Blog">
 <meta property="og:description" content="Notes on offline semantic search and SwiftUI accessibility. On-device intelligence for Wen Gua.">
-<meta property="og:image" content="assets/pipeline.svg">
+<meta property="og:image" content="https://yuzeguitarist.github.io/WenGuaBlog/assets/pipeline.svg">
+<meta property="og:image:alt" content="On-device semantic retrieval pipeline diagram">
+<meta property="og:image:width" content="1240">
+<meta property="og:image:height" content="260">
 <meta property="og:locale" content="en_US">
 <meta property="og:locale:alternate" content="zh_CN">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Why I did not want my diary in the cloud">
+<meta property="article:author" content="Yuze Pan">
+<meta property="article:tag" content="Offline semantic search">
+<meta property="article:tag" content="SwiftUI accessibility">
+<meta property="article:tag" content="On-device intelligence">
+<meta property="article:tag" content="Privacy">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Why I didn't want my diary in the cloud | Wen Gua Blog">
 <meta name="twitter:description" content="Notes on offline semantic search and SwiftUI accessibility. On-device intelligence for Wen Gua.">
+<meta name="twitter:image" content="https://yuzeguitarist.github.io/WenGuaBlog/assets/pipeline.svg">
+<meta name="twitter:image:alt" content="On-device semantic retrieval pipeline diagram">
 <script type="application/ld+json" id="structured-data-article">
 {
   "@context": "https://schema.org",
   "@type": "Article",
-  "headline": "Why I did not want my diary in the cloud",
+  "headline": "Why I didn't want my diary in the cloud",
   "description": "Notes on offline semantic search and SwiftUI accessibility. On-device intelligence for Wen Gua.",
   "url": "https://yuzeguitarist.github.io/WenGuaBlog/",
-  "mainEntityOfPage": "https://yuzeguitarist.github.io/WenGuaBlog/",
-  "inLanguage": ["en", "zh-CN"],
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://yuzeguitarist.github.io/WenGuaBlog/"
+  },
+  "inLanguage": "en",
   "author": {
     "@type": "Person",
-    "name": "Yuze Pan"
+    "name": "Yuze Pan",
+    "url": "https://github.com/yuzeguitarist"
   },
   "publisher": {
     "@type": "Person",
     "name": "Yuze Pan"
   },
+  "image": {
+    "@type": "ImageObject",
+    "url": "https://yuzeguitarist.github.io/WenGuaBlog/assets/pipeline.svg",
+    "width": 1240,
+    "height": 260
+  },
+  "isAccessibleForFree": true,
+  "keywords": [
+    "Offline semantic search",
+    "SwiftUI accessibility",
+    "On-device intelligence",
+    "Privacy"
+  ],
   "about": [
     "Offline semantic search",
     "SwiftUI accessibility",
@@ -1090,14 +1120,14 @@ hr {
     <figure>
       <picture>
         <source srcset="assets/pipeline-dark.svg" media="(prefers-color-scheme: dark)">
-        <img src="assets/pipeline.svg" alt="On-device semantic retrieval pipeline">
+        <img src="assets/pipeline.svg" alt="On-device semantic retrieval pipeline" width="1240" height="260" decoding="async" loading="eager" fetchpriority="high">
       </picture>
       <figcaption>On-device semantic retrieval pipeline</figcaption>
     </figure>
     <figure>
       <picture>
         <source srcset="assets/a11y-flow-dark.svg" media="(prefers-color-scheme: dark)">
-        <img src="assets/a11y-flow.svg" alt="Accessibility flow for VoiceOver and Reduce Motion">
+        <img src="assets/a11y-flow.svg" alt="Accessibility flow for VoiceOver and Reduce Motion" width="1200" height="320" decoding="async" loading="lazy">
       </picture>
       <figcaption>Accessibility flow for VoiceOver and Reduce Motion</figcaption>
     </figure>
@@ -1842,14 +1872,14 @@ private struct FinalCard: View { var body: some View { Color.clear } }</code></p
     <figure>
       <picture>
         <source srcset="assets/pipeline-dark.svg" media="(prefers-color-scheme: dark)">
-        <img src="assets/pipeline.svg" alt="端侧语义检索流程">
+        <img src="assets/pipeline.svg" alt="端侧语义检索流程" width="1240" height="260" decoding="async" loading="lazy">
       </picture>
       <figcaption>端侧语义检索流程</figcaption>
     </figure>
     <figure>
       <picture>
         <source srcset="assets/a11y-flow-dark.svg" media="(prefers-color-scheme: dark)">
-        <img src="assets/a11y-flow.svg" alt="VoiceOver 与 Reduce Motion 无障碍流程">
+        <img src="assets/a11y-flow.svg" alt="VoiceOver 与 Reduce Motion 无障碍流程" width="1200" height="320" decoding="async" loading="lazy">
       </picture>
       <figcaption>VoiceOver 与 Reduce Motion 无障碍流程</figcaption>
     </figure>
@@ -2597,8 +2627,11 @@ const metaDescriptionEl = document.querySelector('meta[name="description"]');
 const ogTitleEl = document.querySelector('meta[property="og:title"]');
 const ogDescriptionEl = document.querySelector('meta[property="og:description"]');
 const ogLocaleEl = document.querySelector('meta[property="og:locale"]');
+const ogImageAltEl = document.querySelector('meta[property="og:image:alt"]');
 const twitterTitleEl = document.querySelector('meta[name="twitter:title"]');
 const twitterDescriptionEl = document.querySelector('meta[name="twitter:description"]');
+const twitterImageAltEl = document.querySelector('meta[name="twitter:image:alt"]');
+const structuredDataArticleEl = document.getElementById('structured-data-article');
 
 function announceStatus(message) {
   if (!statusRegion) return;
@@ -2615,18 +2648,54 @@ function updateCopyButtonsA11y(lang) {
 
 function updateSeoMeta(lang) {
   const isZh = lang === 'zh';
-  const nextTitle = isZh ? '为什么我不想把日记传到云端' : "Why I didn't want my diary in the cloud";
+  const nextTitle = isZh ? '为什么我不想把日记传到云端 | Wen Gua Blog' : "Why I didn't want my diary in the cloud | Wen Gua Blog";
   const nextDescription = isZh
     ? '离线语义搜索 + SwiftUI 无障碍笔记。Wen Gua 的端侧智能实践。'
     : 'Notes on offline semantic search + SwiftUI accessibility. On-device intelligence for Wen Gua.';
+  const nextImageAlt = isZh ? '端侧语义检索流程图' : 'On-device semantic retrieval pipeline diagram';
 
   document.title = nextTitle;
   if (metaDescriptionEl) metaDescriptionEl.setAttribute('content', nextDescription);
   if (ogTitleEl) ogTitleEl.setAttribute('content', nextTitle);
   if (ogDescriptionEl) ogDescriptionEl.setAttribute('content', nextDescription);
   if (ogLocaleEl) ogLocaleEl.setAttribute('content', isZh ? 'zh_CN' : 'en_US');
+  if (ogImageAltEl) ogImageAltEl.setAttribute('content', nextImageAlt);
   if (twitterTitleEl) twitterTitleEl.setAttribute('content', nextTitle);
   if (twitterDescriptionEl) twitterDescriptionEl.setAttribute('content', nextDescription);
+  if (twitterImageAltEl) twitterImageAltEl.setAttribute('content', nextImageAlt);
+  if (structuredDataArticleEl) {
+    structuredDataArticleEl.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": isZh ? '为什么我不想把日记传到云端' : "Why I didn't want my diary in the cloud",
+      "description": nextDescription,
+      "url": "https://yuzeguitarist.github.io/WenGuaBlog/",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://yuzeguitarist.github.io/WenGuaBlog/"
+      },
+      "inLanguage": isZh ? "zh-CN" : "en",
+      "author": {
+        "@type": "Person",
+        "name": "Yuze Pan",
+        "url": "https://github.com/yuzeguitarist"
+      },
+      "publisher": {
+        "@type": "Person",
+        "name": "Yuze Pan"
+      },
+      "image": {
+        "@type": "ImageObject",
+        "url": "https://yuzeguitarist.github.io/WenGuaBlog/assets/pipeline.svg",
+        "width": 1240,
+        "height": 260
+      },
+      "isAccessibleForFree": true,
+      "keywords": isZh
+        ? ["离线语义搜索", "SwiftUI 无障碍", "端侧智能", "隐私"]
+        : ["Offline semantic search", "SwiftUI accessibility", "On-device intelligence", "Privacy"]
+    }, null, 2);
+  }
 }
 
 function updateLanguageUiA11y(lang) {
