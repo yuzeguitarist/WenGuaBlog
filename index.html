@@ -2804,9 +2804,14 @@ function setLang(lang) {
     announceStatus(lang === 'zh' ? '已切换到中文内容' : 'Switched to English content');
   }
   localStorage.setItem('lang', lang);
-  // Rebuild TOC after content is visible
   const shouldAnimate = prev && prev !== lang;
-  setTimeout(() => buildTOC(shouldAnimate), shouldAnimate ? 420 : 0);
+  const delay = shouldAnimate ? 420 : 0;
+  setTimeout(() => {
+    if (document.documentElement.lang !== lang) return;
+    buildTOC(shouldAnimate);
+    scheduleCodeEnhancement(lang);
+    setupSectionRevealForLang(lang);
+  }, delay);
 }
 
 // Manual scroll restoration to avoid layout-shift glitch
@@ -3061,7 +3066,6 @@ function buildTOC(animate) {
     panelNav.style.opacity = '1';
   }
 }
-buildTOC(false);
 
 // ── Syntax Highlighting (Swift-oriented) ──
 function highlightSwift(code) {
@@ -3120,10 +3124,14 @@ function highlightSwift(code) {
   return html;
 }
 
-// ── Wrap all <pre> with copy button + apply highlighting ──
-document.querySelectorAll('pre').forEach((pre) => {
+// ── Lazy code enhancement (active language only) ──
+function enhanceCodeBlock(pre) {
+  if (!pre || pre.getAttribute('data-code-processed') === 'true') return;
   const codeEl = pre.querySelector('code');
-  if (!codeEl) return;
+  if (!codeEl) {
+    pre.setAttribute('data-code-processed', 'true');
+    return;
+  }
 
   const rawText = codeEl.textContent;
   codeEl.innerHTML = highlightSwift(codeEl.innerHTML);
@@ -3157,14 +3165,63 @@ document.querySelectorAll('pre').forEach((pre) => {
   });
 
   wrapper.appendChild(btn);
-});
+  pre.setAttribute('data-code-processed', 'true');
+}
 
-// ── Scroll Reveal ──
-if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  document.querySelectorAll('.section').forEach((el) => el.classList.add('visible'));
-} else {
-  const observer = new IntersectionObserver(
-    (entries) => {
+function prepareCodeBlocksForLang(lang) {
+  const article = document.querySelector('article[data-lang="' + lang + '"]');
+  if (!article) return;
+
+  const pending = Array.from(article.querySelectorAll('pre:not([data-code-processed])'));
+  if (!pending.length) return;
+
+  let idx = 0;
+  function processChunk() {
+    const chunkStart = performance.now();
+    while (idx < pending.length && performance.now() - chunkStart < 10) {
+      enhanceCodeBlock(pending[idx]);
+      idx += 1;
+    }
+    if (idx < pending.length) requestAnimationFrame(processChunk);
+  }
+
+  processChunk();
+}
+
+function scheduleCodeEnhancement(lang) {
+  const expectedLang = lang;
+  const run = () => {
+    if (document.documentElement.lang !== expectedLang) return;
+    prepareCodeBlocksForLang(expectedLang);
+    updateCopyButtonsA11y(expectedLang);
+  };
+
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(run, { timeout: 1000 });
+  } else {
+    setTimeout(run, 50);
+  }
+}
+
+// ── Scroll Reveal (active language only) ──
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let _sectionObserver = null;
+
+function setupSectionRevealForLang(lang) {
+  const article = document.querySelector('article[data-lang="' + lang + '"]');
+  if (!article) return;
+
+  const sections = article.querySelectorAll('.section');
+  if (!sections.length) return;
+
+  if (prefersReducedMotion) {
+    sections.forEach((el) => el.classList.add('visible'));
+    return;
+  }
+
+  if (_sectionObserver) _sectionObserver.disconnect();
+  _sectionObserver = new IntersectionObserver(
+    (entries, observer) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           entry.target.classList.add('visible');
@@ -3174,7 +3231,11 @@ if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     },
     { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
   );
-  document.querySelectorAll('.section').forEach((el) => observer.observe(el));
+
+  sections.forEach((el) => {
+    if (el.classList.contains('visible')) return;
+    _sectionObserver.observe(el);
+  });
 }
 
 // ── Image Lightbox ──
